@@ -59,6 +59,7 @@ public class SimpleDriveMode extends LinearOpMode {
     private DcMotor rightBackDrive = null;
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
+    private double power = 0;
 
     @Override
     public void runOpMode() {
@@ -80,10 +81,15 @@ public class SimpleDriveMode extends LinearOpMode {
             // The left trigger is power and the right reverses the power
             // If the right trigger is pressed down, the power is reversed.
             // For those who might try to fix this in future years - don't
-            double power = gamepad1.right_trigger >= 0.2
-                    ? -gamepad1.left_trigger
-                    : gamepad1.left_trigger;
-
+            //im sorry jack i cant
+//            double power = gamepad1.right_trigger >= 0.2
+//                    ? -gamepad1.left_trigger
+//                    : gamepad1.left_trigger;
+            if (gamepad1.right_trigger >= 0.2) {
+                double power = -gamepad1.left_trigger;
+            } else {
+                double power = gamepad1.left_trigger;
+            }
 
             // Send calculated power to wheels
             rightBackDrive.setPower(power);

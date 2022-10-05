@@ -60,6 +60,8 @@ public class MechanumDriveMode extends LinearOpMode {
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
 
+    private final int DEFAULT_MOVE_TIME = 2;
+
     @Override
     public void runOpMode() {
 
@@ -74,27 +76,70 @@ public class MechanumDriveMode extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
+        float x;
+        float y;
+        float rot;
+        float rotSpeed;
+
+        double lfp;
+        double lbp;
+        double rfp;
+        double rbp;
+
+        double speedModifier;
+
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            // The Letter buttons override the rest of this function
+            if (gamepad1.y)
+                moveForward(0);
+            else if (gamepad1.a)
+                moveBack(0);
+            if (gamepad1.x)
+                moveLeft(0);
+            else if (gamepad1.b)
+                moveRight(0);
 
-            float x = gamepad1.left_stick_x;
-            float y = gamepad1.left_stick_y;
 
+            x = -gamepad1.left_stick_x;
+            y = gamepad1.left_stick_y;
 
-            // Range.clip(value, -1.0, 1.0) ;
+            rot = gamepad1.right_stick_x;
 
-            double lfp = Range.clip(x + y, -1.0, 1.0);
-            double lbp = Range.clip(y - x, -1.0, 1.0);
+            // Range.clip(value, -1.0, 1.0);
 
-            double rfp = Range.clip(y - x, -1.0, 1.0);
-            double rbp = Range.clip(x + y, -1.0, 1.0);
+            // Drive Code
+            lfp = Range.clip(x + y, -1.0, 1.0);
+            lbp = Range.clip(y - x, -1.0, 1.0);
+
+            rfp = Range.clip(y - x, -1.0, 1.0);
+            rbp = Range.clip(x + y, -1.0, 1.0);
+
+            // Fast rotation
+            if (gamepad1.left_stick_button)
+                rotSpeed = 1;
+            else
+                rotSpeed = 2;
+
+            // Slow mode
+            if (gamepad1.right_bumper)
+                speedModifier = .5;
+            else
+                speedModifier = 1;
+
+            // Rotational offset code
+            lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
+            lbp = Range.clip(lbp - rot / rotSpeed, -1.0, 1.0);
+
+            rfp = Range.clip(rfp + rot / rotSpeed, -1.0, 1.0);
+            rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
 
             // Send calculated power to wheels
-            rightBackDrive.setPower(rbp);
-            rightFrontDrive.setPower(rfp);
-            leftFrontDrive.setPower(lfp);
-            leftBackDrive.setPower(lbp);
+            rightBackDrive.setPower(rbp * speedModifier);
+            rightFrontDrive.setPower((-rfp) * speedModifier);
+            leftFrontDrive.setPower(lfp * speedModifier);
+            leftBackDrive.setPower(lbp * speedModifier);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -115,4 +160,103 @@ public class MechanumDriveMode extends LinearOpMode {
 
 
     }
+
+    // These functions are to prototype and test autonomous
+
+    private void move(int dir) {
+
+        /*
+        0 = forward
+        1 = right
+        2 = back
+        3 = left
+         */
+
+        int x;
+        int y;
+
+
+        switch (dir) {
+
+            case 0:
+                y = 1;
+                x = 0;
+                break;
+            case 1:
+                y = 0;
+                x = 1;
+                break;
+            case 2:
+                y = -1;
+                x = 0;
+                break;
+            case 3:
+                y = 0;
+                x = -1;
+                break;
+            default:
+                x = 0;
+                y = 0;
+                break;
+        }
+
+        leftFrontDrive.setPower(Range.clip(x + y, -1.0, 1.0));
+        leftBackDrive.setPower(Range.clip(y - x, -1.0, 1.0));
+
+        rightFrontDrive.setPower(-Range.clip(y - x, -1.0, 1.0));
+        rightBackDrive.setPower(Range.clip(x + y, -1.0, 1.0));
+
+    }
+
+    // These four functions can probably be compressed so if u find a way to do that be my guest
+
+    public void moveForward(int seconds) {
+
+        if (seconds == 0)
+            seconds = DEFAULT_MOVE_TIME;
+
+        double baseline = runtime.milliseconds();
+
+        // Running until the amount of time has elapsed
+        while (runtime.milliseconds() < baseline + (seconds * 1000))
+            move(0);
+    }
+
+    public void moveRight(int seconds) {
+
+        if (seconds == 0)
+            seconds = DEFAULT_MOVE_TIME;
+
+        double baseline = runtime.milliseconds();
+
+        // Running until the amount of time has elapsed
+        while (runtime.milliseconds() < baseline + (seconds * 1000))
+            move(1);
+    }
+
+    public void moveBack(int seconds) {
+
+        if (seconds == 0)
+            seconds = DEFAULT_MOVE_TIME;
+
+        double baseline = runtime.milliseconds();
+
+        // Running until the amount of time has elapsed
+        while (runtime.milliseconds() < baseline + (seconds * 1000))
+            move(2);
+    }
+
+    public void moveLeft(int seconds) {
+
+        if (seconds == 0)
+            seconds = DEFAULT_MOVE_TIME;
+
+        double baseline = runtime.milliseconds();
+
+        // Running until the amount of time has elapsed
+        while (runtime.milliseconds() < baseline + (seconds * 1000))
+            move(3);
+    }
+
+
 }

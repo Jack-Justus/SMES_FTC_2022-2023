@@ -60,10 +60,16 @@ public class MechanumDriveMode extends LinearOpMode {
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
 
+    private boolean slowModeActive = false;
+
     private final int DEFAULT_MOVE_TIME = 1;
 
     @Override
     public void runOpMode() {
+
+        // HEADS UP
+        // THE MOTOR NAMES REFER TO THE ROBOT FROM BEHIND
+        // FOR EXAMPLE - THE FRONT LEFT MOTOR IS ACTUALLY CALLED THE BACK RIGHT MOTOR IN CODE
 
 
         telemetry.addData("Status", "Initialized");
@@ -105,7 +111,7 @@ public class MechanumDriveMode extends LinearOpMode {
             x = -gamepad1.left_stick_x;
             y = gamepad1.left_stick_y;
 
-            rot = gamepad1.right_stick_x;
+            rot = -gamepad1.right_stick_x;
 
             // Range.clip(value, -1.0, 1.0);
 
@@ -124,9 +130,17 @@ public class MechanumDriveMode extends LinearOpMode {
 
             // Slow mode
             if (gamepad1.right_bumper)
-                speedModifier = .5;
+                slowModeActive = true;
             else
+                slowModeActive = false;
+
+            if (slowModeActive) {
+                speedModifier = .5;
+                setMotorsBreakMode();
+            } else {
                 speedModifier = 1;
+                setMotorsFloatMode();
+            }
 
             // Rotational offset code factoring in precalculated drive code
             lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
@@ -134,19 +148,6 @@ public class MechanumDriveMode extends LinearOpMode {
 
             rfp = Range.clip(rfp + rot / rotSpeed, -1.0, 1.0);
             rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
-
-            // Setting ZeroPowerBehavior
-            if (gamepad1.left_bumper) {
-                rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            } else {
-                rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-                rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-                leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-                leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            }
 
             // Send calculated power to wheels
             rightBackDrive.setPower((-rbp) * speedModifier);
@@ -170,6 +171,21 @@ public class MechanumDriveMode extends LinearOpMode {
         leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+
+        // Setting the motor encoder position to zero
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Ensuring the motors get the instructions
+        sleep(100);
+
+        // This makes sure the motors are moving at the same speed
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
     }
@@ -269,6 +285,20 @@ public class MechanumDriveMode extends LinearOpMode {
         // Running until the amount of time has elapsed
         while (runtime.milliseconds() < baseline + (seconds * 1000))
             move(3);
+    }
+
+    public void setMotorsBreakMode() {
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    public void setMotorsFloatMode() {
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
 

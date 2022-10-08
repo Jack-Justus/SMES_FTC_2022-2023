@@ -60,7 +60,7 @@ public class MechanumDriveMode extends LinearOpMode {
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
 
-    private final int DEFAULT_MOVE_TIME = 2;
+    private final int DEFAULT_MOVE_TIME = 1;
 
     @Override
     public void runOpMode() {
@@ -117,7 +117,7 @@ public class MechanumDriveMode extends LinearOpMode {
             rbp = Range.clip(x + y, -1.0, 1.0);
 
             // Fast rotation
-            if (gamepad1.left_stick_button)
+            if (gamepad1.right_stick_button)
                 rotSpeed = 1;
             else
                 rotSpeed = 2;
@@ -128,7 +128,7 @@ public class MechanumDriveMode extends LinearOpMode {
             else
                 speedModifier = 1;
 
-            // Rotational offset code
+            // Rotational offset code factoring in precalculated drive code
             lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
             lbp = Range.clip(lbp - rot / rotSpeed, -1.0, 1.0);
 
@@ -179,20 +179,20 @@ public class MechanumDriveMode extends LinearOpMode {
         switch (dir) {
 
             case 0:
-                y = 1;
+                y = -1;
                 x = 0;
                 break;
             case 1:
                 y = 0;
-                x = 1;
+                x = -1;
                 break;
             case 2:
-                y = -1;
+                y = 1;
                 x = 0;
                 break;
             case 3:
                 y = 0;
-                x = -1;
+                x = 1;
                 break;
             default:
                 x = 0;
@@ -218,7 +218,7 @@ public class MechanumDriveMode extends LinearOpMode {
         double baseline = runtime.milliseconds();
 
         // Running until the amount of time has elapsed
-        while (runtime.milliseconds() < baseline + (seconds * 1000))
+        while (runtime.milliseconds() < baseline + (seconds * 1000) && opModeIsActive())
             move(0);
     }
 

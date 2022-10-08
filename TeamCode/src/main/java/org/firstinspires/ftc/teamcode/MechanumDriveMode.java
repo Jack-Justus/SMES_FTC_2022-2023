@@ -135,11 +135,24 @@ public class MechanumDriveMode extends LinearOpMode {
             rfp = Range.clip(rfp + rot / rotSpeed, -1.0, 1.0);
             rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
 
+            // Setting ZeroPowerBehavior
+            if (gamepad1.left_bumper) {
+                rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            } else {
+                rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            }
+
             // Send calculated power to wheels
-            rightBackDrive.setPower(rbp * speedModifier);
-            rightFrontDrive.setPower((-rfp) * speedModifier);
-            leftFrontDrive.setPower(lfp * speedModifier);
-            leftBackDrive.setPower(lbp * speedModifier);
+            rightBackDrive.setPower((-rbp) * speedModifier);
+            rightFrontDrive.setPower((rfp) * speedModifier);
+            leftFrontDrive.setPower((-lfp) * speedModifier);
+            leftBackDrive.setPower((-lbp) * speedModifier);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());

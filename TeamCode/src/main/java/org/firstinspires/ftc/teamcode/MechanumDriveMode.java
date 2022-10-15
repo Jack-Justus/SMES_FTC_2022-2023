@@ -60,6 +60,11 @@ public class MechanumDriveMode extends LinearOpMode {
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
 
+    float rfEncoderPosition;
+    float rbEncoderPosition;
+    float lfEncoderPosition;
+    float lbEncoderPosition;
+
     private boolean slowModeActive = false;
 
     private final int DEFAULT_MOVE_TIME = 1;
@@ -72,11 +77,11 @@ public class MechanumDriveMode extends LinearOpMode {
         // FOR EXAMPLE - THE FRONT LEFT MOTOR IS ACTUALLY CALLED THE BACK RIGHT MOTOR IN CODE
 
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
         // Method to assign and initialize the hardware
         initializeHardware();
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -157,7 +162,14 @@ public class MechanumDriveMode extends LinearOpMode {
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "lf + rb (%.2f), lb + rf (%.2f)", lfp, rfp);
+            telemetry.addData("Motors", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
+
+            rfEncoderPosition = rightFrontDrive.getCurrentPosition();
+            rbEncoderPosition = rightBackDrive.getCurrentPosition();
+            lfEncoderPosition = leftFrontDrive.getCurrentPosition();
+            lbEncoderPosition = leftBackDrive.getCurrentPosition();
+
+            telemetry.addData("Encoders", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfEncoderPosition, rbEncoderPosition, lbEncoderPosition, rfEncoderPosition);
             telemetry.update();
         }
     }
@@ -183,8 +195,8 @@ public class MechanumDriveMode extends LinearOpMode {
 
         // This makes sure the motors are moving at the same speed
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 

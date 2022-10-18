@@ -20,24 +20,20 @@ public class WebcamTest extends LinearOpMode {
     OpenCvWebcam webcam;
 
     @Override
-    public void runOpMode()
-    {
+    public void runOpMode() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "PUT CAMERA CONFIG NAME HERE"), cameraMonitorViewId);
-        webcam.setPipeline(new SamplePipeline());
+        webcam.setPipeline(new Pipeline());
 
         webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
-        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
-            public void onOpened()
-            {
+            public void onOpened() {
                 webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
             }
 
             @Override
-            public void onError(int errorCode)
-            {
+            public void onError(int errorCode) {
                 /*
                  * This will be called if the camera could not be opened
                  */
@@ -49,24 +45,20 @@ public class WebcamTest extends LinearOpMode {
 
         waitForStart();
 
-        while (opModeIsActive())
-        {
-            /*
-             * Send some stats to the telemetry
-             */
+        while (opModeIsActive()) {
             telemetry.addData("Frame Count", webcam.getFrameCount());
             telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
             telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
             telemetry.addData("Pipeline time ms", webcam.getPipelineTimeMs());
             telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
             telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
-            telemetry.update();
 
             /*
              * NOTE: stopping the stream from the camera early (before the end of the OpMode
              * when it will be automatically stopped for you) *IS* supported. The "if" statement
              * below will stop streaming from the camera when the "A" button on gamepad 1 is pressed.
              */
+
             if(gamepad1.a)
             {
                 webcam.stopStreaming();
@@ -77,7 +69,7 @@ public class WebcamTest extends LinearOpMode {
         }
     }
 
-    class SamplePipeline extends OpenCvPipeline
+    class Pipeline extends OpenCvPipeline
     {
         boolean viewportPaused;
 
@@ -91,20 +83,51 @@ public class WebcamTest extends LinearOpMode {
          */
 
         @Override
-        public Mat processFrame(Mat input)
-        {
-            //need to work on this
-            //this draw a rectangle, ingore this for now
-            Imgproc.rectangle(
-                    input,
-                    new Point(
-                            input.cols()/4,
-                            input.rows()/4),
-                    new Point(
-                            input.cols()*(3f/4f),
-                            input.rows()*(3f/4f)),
-                    new Scalar(0, 255, 0), 4);
+        public Mat processFrame(Mat input) {
 
+            //TODO: WHITE BALANCING
+            //BASICALLY FIND AVERAGE COLOR VAL OF IMAGE AND SUBTRACT/ADD IN ORDER TO BALANCE IT
+            //TO A PREDETERMINED IMAGE
+
+            int parkSpot = -1;
+            int width = input.width(); //width of image
+            int height = input.height(); //height of image
+            int channels = input.channels(); //color channels, may be obselete since should always be 3
+
+            int prevR = -1;
+            int prevG = -1;
+            int prevB = -1;
+            int offset = 100; //tbd, will be significantly lower once balance implemented
+
+
+            //goes through image, finds necessary color vals to indicate where to park
+            //park in spot 1 - neon green (rgb: ~50 ~255 ~20) and bright pink (rgb: ~255 ~0 ~125)
+            //spot 2 - bright yellow (rgb: ~255, ~255, ~0) and full blue (rgb: ~0 ~0 ~255)
+            //spot 3 - red (rgb:~255 ~0 ~0 ) and full green (rgb: ~0 ~255 ~0)
+            for (int i = 0; i < height; i+= 5) {
+                for (int j = 0; j < width; j+= 5) {
+                    double[] data = input.get(j, i);
+                    int currRed = (int) data[0];
+                    int currGreen = (int) data[1];
+                    int currBlue = (int) data[2];
+                    if (currRed >= 255 - offset && currGreen <= 0 + offset  && currBlue <= 0 + offset) {
+                        parkSpot = 0;
+                    }
+
+                    if (currRed <= 0 + offset && currGreen >= 255 - offset  && currBlue <= 0 + offset) {
+                        parkSpot = 1;
+                    }
+
+                    if (currRed <= 0 + offset && currGreen <= 0 + offset  && currBlue >= 255 - offset) {
+                        parkSpot = 2;
+                    }
+                    prevR = currRed;
+                    prevG = currGreen;
+                    prevB = currBlue;
+                }
+            }
+            telemetry.addData("Park Spot", parkSpot);
+            telemetry.update();
             return input;
         }
     }

@@ -22,7 +22,7 @@ public class WebcamTest extends LinearOpMode {
     @Override
     public void runOpMode() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "PUT CAMERA CONFIG NAME HERE"), cameraMonitorViewId);
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "wbcam"), cameraMonitorViewId);
         webcam.setPipeline(new Pipeline());
 
         webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
@@ -97,7 +97,7 @@ public class WebcamTest extends LinearOpMode {
             int prevR = -1;
             int prevG = -1;
             int prevB = -1;
-            int offset = 100; //tbd, will be significantly lower once balance implemented
+            int offset = 100; //tbd, will be significantly lower once balance impleme
 
 
             //goes through image, finds necessary color vals to indicate where to park
@@ -106,7 +106,7 @@ public class WebcamTest extends LinearOpMode {
             //spot 3 - red (rgb:~255 ~0 ~0 ) and full green (rgb: ~0 ~255 ~0)
             for (int i = 0; i < height; i+= 5) {
                 for (int j = 0; j < width; j+= 5) {
-                    double[] data = input.get(j, i);
+                    double[] data = input.get(i,j);
                     int currRed = (int) data[0];
                     int currGreen = (int) data[1];
                     int currBlue = (int) data[2];
@@ -126,7 +126,7 @@ public class WebcamTest extends LinearOpMode {
                     prevB = currBlue;
                 }
             }
-            telemetry.addData("Park Spot", parkSpot);
+            telemetry.addData("park spot", parkSpot);
             telemetry.update();
             return input;
         }

@@ -67,7 +67,7 @@ public class MechanumDriveMode extends LinearOpMode {
 
     private boolean slowModeActive = false;
 
-    private final int DEFAULT_MOVE_TIME = 1;
+    private final int DEFAULT_MOVE_TICKS = 500;
 
     @Override
     public void runOpMode() {
@@ -110,6 +110,16 @@ public class MechanumDriveMode extends LinearOpMode {
             if (gamepad1.x)
                 moveLeft(0);
             else if (gamepad1.b)
+                moveRight(0);
+
+            // The Letter buttons override the rest of this function
+            if (gamepad2.y)
+                moveForward(0);
+            else if (gamepad2.a)
+                moveBack(0);
+            if (gamepad2.x)
+                moveLeft(0);
+            else if (gamepad2.b)
                 moveRight(0);
 
 
@@ -251,53 +261,58 @@ public class MechanumDriveMode extends LinearOpMode {
 
     // These four functions can probably be compressed so if u find a way to do that be my guest
 
-    public void moveForward(int seconds) {
+    public void moveForward(int ticks) {
 
-        if (seconds == 0)
-            seconds = DEFAULT_MOVE_TIME;
+        if (ticks == 0)
+            ticks = DEFAULT_MOVE_TICKS;
 
-        double baseline = runtime.milliseconds();
+        double baselineL = Math.abs(leftFrontDrive.getCurrentPosition());
+        double baselineR = Math.abs(rightFrontDrive.getCurrentPosition());
 
-        // Running until the amount of time has elapsed
-        while (runtime.milliseconds() < baseline + (seconds * 1000) && opModeIsActive())
-            move(0);
+        // Running until the amount of ticks in either wheel has elapsed
+        while (Math.abs(leftFrontDrive.getCurrentPosition()) < (baselineL + ticks) || Math.abs(rightFrontDrive.getCurrentPosition()) < (baselineR + ticks))
+            if (opModeIsActive())
+                // Its reversed
+                move(2);
+
     }
 
-    public void moveRight(int seconds) {
+    public void moveRight(int ticks) {
 
-        if (seconds == 0)
-            seconds = DEFAULT_MOVE_TIME;
+        if (ticks == 0)
+            ticks = DEFAULT_MOVE_TICKS;
 
         double baseline = runtime.milliseconds();
 
         // Running until the amount of time has elapsed
-        while (runtime.milliseconds() < baseline + (seconds * 1000))
+        while (runtime.milliseconds() < baseline + (ticks * 1000))
             move(1);
     }
 
-    public void moveBack(int seconds) {
+    public void moveBack(int ticks) {
 
-        if (seconds == 0)
-            seconds = DEFAULT_MOVE_TIME;
+        if (ticks == 0)
+            ticks = DEFAULT_MOVE_TICKS;
 
         double baseline = runtime.milliseconds();
 
         // Running until the amount of time has elapsed
-        while (runtime.milliseconds() < baseline + (seconds * 1000))
+        while (runtime.milliseconds() < baseline + (ticks * 1000))
             move(2);
     }
 
-    public void moveLeft(int seconds) {
+    public void moveLeft(int ticks) {
 
-        if (seconds == 0)
-            seconds = DEFAULT_MOVE_TIME;
+        if (ticks == 0)
+            ticks = DEFAULT_MOVE_TICKS;
 
         double baseline = runtime.milliseconds();
 
         // Running until the amount of time has elapsed
-        while (runtime.milliseconds() < baseline + (seconds * 1000))
+        while (runtime.milliseconds() < baseline + (ticks * 1000))
             move(3);
     }
+
 
     public void setMotorsBreakMode() {
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

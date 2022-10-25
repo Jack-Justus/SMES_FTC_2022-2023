@@ -61,11 +61,11 @@ public class ClawTest extends LinearOpMode {
 
             //set servo to 180
             if (gamepad1.x) {
-             claw.setPosition(1);
+                claw.setPosition(1);
             }
             //set servo to 0
             if (gamepad1.y) {
-                claw.setPosition(0);
+                claw.setPosition(.7);
             }
 
             // Show the elapsed game time and wheel power.

@@ -88,44 +88,62 @@ public class WebcamTest extends LinearOpMode {
             //TODO: WHITE BALANCING
             //BASICALLY FIND AVERAGE COLOR VAL OF IMAGE AND SUBTRACT/ADD IN ORDER TO BALANCE IT
             //TO A PREDETERMINED IMAGE
+            //MAY BE BUILT IN OPENCV FUNCTION, WILL TEST SOON
 
             int parkSpot = -1;
             int width = input.width(); //width of image
             int height = input.height(); //height of image
             int channels = input.channels(); //color channels, may be obselete since should always be 3
 
-            int prevR = -1;
-            int prevG = -1;
-            int prevB = -1;
-            int offset = 100; //tbd, will be significantly lower once balance impleme
+            int offset = 40; //tbd, will be significantly lower once balance implemented
 
+            //counts instances of what may be a cone spot, the largest one will
+            int [] parkArray = {0,0,0};
 
-            //goes through image, finds necessary color vals to indicate where to park
-            //park in spot 1 - neon green (rgb: ~50 ~255 ~20) and bright pink (rgb: ~255 ~0 ~125)
-            //spot 2 - bright yellow (rgb: ~255, ~255, ~0) and full blue (rgb: ~0 ~0 ~255)
-            //spot 3 - red (rgb:~255 ~0 ~0 ) and full green (rgb: ~0 ~255 ~0)
+            //goes through image, i corresponds to img height, j to width, finds necessary color vals to indicate where to park
             for (int i = 0; i < height; i+= 5) {
-                for (int j = 0; j < width; j+= 5) {
+                for (int j = 0; j < width-20; j+= 5) {
                     double[] data = input.get(i,j);
+                    double[] forwardData = input.get(i,j+20);
+                    //forward data is a few pixels ahead of the current pixel
+                    //basically this is important since the cones are half one color (for example red) and half another (for examples blue)
+                    //if we have a red pixel and a blue pixel is followed by it, it indicates that the parking cone may be there, this increments the count
                     int currRed = (int) data[0];
                     int currGreen = (int) data[1];
                     int currBlue = (int) data[2];
-                    if (currRed >= 255 - offset && currGreen <= 0 + offset  && currBlue <= 0 + offset) {
-                        parkSpot = 0;
+
+                    int fwdRed = (int) forwardData[0];
+                    int fwdGreen = (int) forwardData[1];
+                    int fwdBlue = (int) forwardData[2];
+
+                    //if current is mostly red and forward is mostly blue, it could be the 1st s pot
+                    if ((currRed >= 255 - offset && currGreen <= offset && currBlue <= offset) && (fwdRed <= offset && fwdGreen <= offset && fwdBlue >= 255 - offset)) {
+                        parkArray[0] += 1;
                     }
 
-                    if (currRed <= 0 + offset && currGreen >= 255 - offset  && currBlue <= 0 + offset) {
-                        parkSpot = 1;
+                    //if current is mostly white and forward is mostly green, it could be the 2nd spot
+                    if ((currRed >= 255 - offset && currGreen >= 255 - offset && currBlue >= 255 - offset) && (fwdRed <= offset && fwdGreen >= 255 && fwdBlue <= offset)) {
+                        parkArray[1] += 1;
                     }
 
-                    if (currRed <= 0 + offset && currGreen <= 0 + offset  && currBlue >= 255 - offset) {
-                        parkSpot = 2;
+                    //if current is mostly black and forward is mostly yellow, it could be the 3rd spot
+                    if ((currRed <= offset && currGreen <= offset && currBlue <= offset) && (fwdRed >= 255 - offset&& fwdGreen >= 255 - offset && fwdBlue <= offset)) {
+                        parkArray[2] += 1;
                     }
-                    prevR = currRed;
-                    prevG = currGreen;
-                    prevB = currBlue;
                 }
             }
+
+            //the largest array value will be where to park
+            if (parkArray[0] >= parkArray[1] && parkArray[0] >= parkArray[2]) {
+                parkSpot = 1;
+            }
+            if (parkArray[1] >= parkArray[0] && parkArray[1] >= parkArray[2]) {
+                parkSpot = 2;
+            }
+            if (parkArray[2] >= parkArray[0] && parkArray[2] >= parkArray[1]) {
+                parkSpot = 3;
+            }
+
             telemetry.addData("park spot", parkSpot);
             telemetry.update();
             return input;

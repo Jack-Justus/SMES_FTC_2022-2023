@@ -19,6 +19,7 @@ import org.openftc.easyopencv.OpenCvWebcam;
 
 @TeleOp
 public class WebcamTest extends LinearOpMode {
+    int parkSpot;
     OpenCvWebcam webcam;
 
     @Override
@@ -92,7 +93,6 @@ public class WebcamTest extends LinearOpMode {
             //TO A PREDETERMINED IMAGE
             //MAY BE BUILT IN OPENCV FUNCTION, WILL TEST SOON
 
-            int parkSpot = -1;
             int width = input.width(); //width of image
             int height = input.height(); //height of image
             int channels = input.channels(); //color channels, may be obselete since should always be 3

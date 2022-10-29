@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -59,6 +60,7 @@ public class MechanumDriveMode extends LinearOpMode {
     private DcMotor rightBackDrive = null;
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
+    private CRServo armNameHere;
 
     float rfEncoderPosition;
     float rbEncoderPosition;
@@ -193,6 +195,7 @@ public class MechanumDriveMode extends LinearOpMode {
         leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+        armNameHere = hardwareMap.get(CRServo.class, "clawServo");
 
         // Setting the motor encoder position to zero
         leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -311,6 +314,20 @@ public class MechanumDriveMode extends LinearOpMode {
         // Running until the amount of time has elapsed
         while (runtime.milliseconds() < baseline + (ticks * 1000))
             move(3);
+    }
+
+    private void controlArm() {
+
+        // Closing and opening Arm Servo
+
+        // Taking inputs and setting power
+        if (gamepad2.b)
+            armNameHere.setPower(1);
+        else if (gamepad2.a)
+            armNameHere.setPower(-1);
+        else
+            armNameHere.setPower(0);
+
     }
 
 

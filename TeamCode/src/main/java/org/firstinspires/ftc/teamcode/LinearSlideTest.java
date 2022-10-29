@@ -35,7 +35,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Normal Drive Mode", group = "Linear Opmode")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Linear Slide Test", group = "Linear Opmode")
 public class LinearSlideTest extends LinearOpMode {
 
     // Declare OpMode members.

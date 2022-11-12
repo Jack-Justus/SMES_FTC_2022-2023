@@ -34,17 +34,20 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Linear Slide Test", group = "Linear Opmode")
+
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Encoder Linear Slide Test", group = "Linear Opmode")
 public class EncLinearSlideTest extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     // MAX_TICKS is the value at the top (don't raise up more than this)
     // MIN_TICKS is the value at the bottom (don't wind up more than this)
-    final int MAX_TICKS = 999;
-    final int MIN_TICKS = 1;
+    final int MAX_TICKS = 1500;
+    final int MIN_TICKS = 0;
 
     private DcMotorEx linearSlide;
+
+    boolean upperBoundHit = false;
 
     @Override
     public void runOpMode() {
@@ -62,7 +65,7 @@ public class EncLinearSlideTest extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             controlLinearSlide();
-            telemetry.addData("Slide encoder value", linearSlide.getCurrentPosition());
+            telemetry.addData("Slide encoder value: ", linearSlide.getCurrentPosition());
             telemetry.update();
         }
     }
@@ -77,23 +80,57 @@ public class EncLinearSlideTest extends LinearOpMode {
         // Ensuring the motors get the instructions
         sleep(100);
 
+        linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     private void controlLinearSlide() {
-        linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        if (gamepad2.b)
-            if (linearSlide.getCurrentPosition() >= MAX_TICKS){
-                linearSlide.setPower(0);
-            } else {
+
+        if (gamepad2.b) {
+            // Going up
+
+            // If the linear slide has hit the top then the upperBoundHit becomes true
+            // We can only move the linear slide up if upperBoundHit is false
+            // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
+            if (linearSlide.getCurrentPosition() >= MAX_TICKS)
+                upperBoundHit = true;
+            else if (linearSlide.getCurrentPosition() < MAX_TICKS - 100)
+                upperBoundHit = false;
+
+            // If the current position is valid, we move the motor upwards
+            // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
+            if ((linearSlide.getCurrentPosition() < MAX_TICKS) && (!upperBoundHit))
                 linearSlide.setPower(1);
-            }
-        else if (gamepad2.a)
-            if (linearSlide.getCurrentPosition() <= MIN_TICKS){
+            else
                 linearSlide.setPower(0);
-            } else {
-                linearSlide.setPower(-1);
-            }
-        else
+
+        } else if (gamepad2.a) {
+            // Going down
+
+            // If the current position is valid, we move the motor upwards
+            // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
+            if ((linearSlide.getCurrentPosition() > MIN_TICKS))
+                linearSlide.setPower(-.5);
+            else
+                linearSlide.setPower(0);
+        } else {
             linearSlide.setPower(0);
+        }
+
+
+//        if (gamepad2.b)
+//            if (linearSlide.getCurrentPosition() >= MAX_TICKS) {
+//                linearSlide.setPower(0);
+//            } else {
+//                linearSlide.setPower(1);
+//            }
+//        else if (gamepad2.a)
+//            if (linearSlide.getCurrentPosition() <= MIN_TICKS) {
+//                linearSlide.setPower(0);
+//            } else {
+//                linearSlide.setPower(-.5);
+//            }
+//        else
+//            linearSlide.setPower(0);
     }
 }

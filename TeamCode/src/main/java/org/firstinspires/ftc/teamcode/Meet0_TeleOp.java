@@ -51,11 +51,11 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 // WHAT IS WHAT
-    // gamepad.2 is "weapons" - claw (x- close, y- open) - slide (a- up, b- down)
-    // gamepad.1 is driving - motors dual-stick drive, right bumper for slow mode
+// gamepad.2 is "weapons" - claw (x- close, y- open) - slide (a- up, b- down)
+// gamepad.1 is driving - motors dual-stick drive, right bumper for slow mode
 
 // NEED TO DO
-    // update linear slide code appropriately with
+// update linear slide code appropriately with
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Normal Drive Mode", group = "Linear Opmode")
 public class Meet0_TeleOp extends LinearOpMode {
 
@@ -72,7 +72,13 @@ public class Meet0_TeleOp extends LinearOpMode {
     private DcMotorEx linearSlide = null;
     private Servo claw = null;
 
-    private boolean slowModeActive = false;
+    // Used for linear slide
+    private boolean upperBoundHit = false;
+    private boolean lowerBoundHit = false;
+    // MAX_TICKS is the value at the top (don't raise up more than this)
+    // MIN_TICKS is the value at the bottom (don't wind up more than this)
+    final int MAX_TICKS = 1800;
+    final int MIN_TICKS = 0;
 
     @Override
     public void runOpMode() {
@@ -125,10 +131,7 @@ public class Meet0_TeleOp extends LinearOpMode {
                 rotSpeed = 2;
 
             // Slow mode
-            if (gamepad1.right_bumper)
-                slowModeActive = true;
-            else
-                slowModeActive = false;
+            boolean slowModeActive = gamepad1.right_bumper;
 
             if (slowModeActive) {
                 speedModifier = .5;
@@ -151,8 +154,8 @@ public class Meet0_TeleOp extends LinearOpMode {
             leftFrontDrive.setPower((-lfp) * speedModifier);
             leftBackDrive.setPower((-lbp) * speedModifier);
 
-            controlSlide();
             controlClaw();
+            controlLinearSlide();
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -172,6 +175,56 @@ public class Meet0_TeleOp extends LinearOpMode {
         linearSlide = hardwareMap.get(DcMotorEx.class, "slide");
         claw = hardwareMap.get(Servo.class, "claw");
 
+        linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+    }
+
+    private void controlLinearSlide() {
+
+
+        if (gamepad2.b) {
+            // Going up
+
+            // If the linear slide has hit the top then the upperBoundHit becomes true
+            // We can only move the linear slide up if upperBoundHit is false
+            // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
+            if (linearSlide.getCurrentPosition() >= MAX_TICKS)
+                upperBoundHit = true;
+            else if (linearSlide.getCurrentPosition() < MAX_TICKS - 100)
+                upperBoundHit = false;
+
+            // If the current position is valid, we move the motor upwards
+            // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
+            if ((linearSlide.getCurrentPosition() < MAX_TICKS) && (!upperBoundHit))
+                linearSlide.setPower(1);
+            else
+                linearSlide.setPower(0);
+
+        } else if (gamepad2.a) {
+            // Going downa
+
+            // If the linear slide has hit the top then the upperBoundHit becomes true
+            // We can only move the linear slide up if upperBoundHit is false
+            // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
+            if (linearSlide.getCurrentPosition() <= MIN_TICKS + 25)
+                lowerBoundHit = true;
+            else if (linearSlide.getCurrentPosition() > MIN_TICKS)
+                lowerBoundHit = false;
+
+
+            // If the current position is valid, we move the motor upwards
+            // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
+            if ((linearSlide.getCurrentPosition() > MIN_TICKS) && (!lowerBoundHit))
+                linearSlide.setPower(-.5);
+            else
+                linearSlide.setPower(0);
+        } else {
+            linearSlide.setPower(0);
+        }
+
+        telemetry.addData("Slide encoder value: ", linearSlide.getCurrentPosition());
+        telemetry.update();
     }
 
     public void controlClaw() {
@@ -179,23 +232,14 @@ public class Meet0_TeleOp extends LinearOpMode {
         // Taking inputs and setting power
         //set servo to 180
         if (gamepad2.x) {
-            claw.setPosition(1);
+            double CLAW_CLOSED = 1;
+            claw.setPosition(CLAW_CLOSED);
+        } else if (gamepad2.y) {
+            double CLAW_OPEN = .7;
+            claw.setPosition(CLAW_OPEN);
         }
-        //set servo to 0
-        if (gamepad2.y) {
-            claw.setPosition(.7);
-        }
-    }
 
-    public void controlSlide(){
-        // lifting and bringing down slide
-        // b for down, a for up
-        if (gamepad2.b)
-            linearSlide.setPower(1);
-        else if (gamepad2.a)
-            linearSlide.setPower(-1);
-        else
-            linearSlide.setPower(0);
+
     }
 
     public void setMotorsBreakMode() {

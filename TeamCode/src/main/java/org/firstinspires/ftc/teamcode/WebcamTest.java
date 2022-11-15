@@ -16,6 +16,9 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 @TeleOp
@@ -90,51 +93,60 @@ public class WebcamTest extends LinearOpMode {
         public Mat processFrame(Mat input) {
 
             //TODO: WHITE BALANCING
-            //BASICALLY FIND AVERAGE COLOR VAL OF IMAGE AND SUBTRACT/ADD IN ORDER TO BALANCE IT
-            //TO A PREDETERMINED IMAGE
-            //MAY BE BUILT IN OPENCV FUNCTION, WILL TEST SOON
+            //this algorithm was largely inspired by GIMP'S algorithm for white balancing
+            //https://docs.gimp.org/2.10/en/gimp-layer-white-balance.html
+            //basically, the end values of each individual r g b layer are removed
+            //for example, if a red layer covers a full spectrum of red values (so 0-255)
+            //the output may cut down this spectrum to 10-240
+            //then these new values are mapped back to 0-255, so some layers will be missing values (this is intended)
+
 
             int width = input.width(); //width of image
             int height = input.height(); //height of image
-            int channels = input.channels(); //color channels, may be obselete since should always be 3
 
-            int offset = 40; //tbd, will be significantly lower once balance implemented
+            List<List<Integer>> imageList = new ArrayList<List<Integer>>();
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    double[] data = input.get(i,j);
+
+                    int R = (int) data[0];
+                    int G = (int) data[1];
+                    int B = (int) data[2];
+
+                    imageList.add(Arrays.asList(j, i, R, G, B));
+                }
+            }
+
+            imageList = balanceImageArray(imageList);
+
+            int offset = 10;
 
             //counts instances of what may be a cone spot, the largest one will
             int [] parkArray = {0,0,0};
 
-            //goes through image, i corresponds to img height, j to width, finds necessary color vals to indicate where to park
-            for (int i = 0; i < height; i+= 5) {
-                for (int j = 0; j < width-20; j+= 5) {
-                    double[] data = input.get(i,j);
-                    double[] forwardData = input.get(i,j+20);
-                    //forward data is a few pixels ahead of the current pixel
-                    //basically this is important since the cones are half one color (for example red) and half another (for examples blue)
-                    //if we have a red pixel and a blue pixel is followed by it, it indicates that the parking cone may be there, this increments the count
-                    int currRed = (int) data[0];
-                    int currGreen = (int) data[1];
-                    int currBlue = (int) data[2];
+            for (int i = 0; i < imageList.size(); i++) {
+                int currRed = imageList.get(i).get(2);
+                int currGreen = imageList.get(i).get(3);
+                int currBlue = imageList.get(i).get(4);
 
-                    int fwdRed = (int) forwardData[0];
-                    int fwdGreen = (int) forwardData[1];
-                    int fwdBlue = (int) forwardData[2];
+                int fwdRed = imageList.get(i+3).get(2);
+                int fwdGreen = imageList.get(i+3).get(3);
+                int fwdBlue = imageList.get(i+3).get(4);
+                if ((currRed >= 255 - offset && currGreen <= offset && currBlue <= offset) && (fwdRed <= offset && fwdGreen <= offset && fwdBlue >= 255 - offset)) {
+                    parkArray[0] += 1;
+                }
 
-                    //if current is mostly red and forward is mostly blue, it could be the 1st s pot
-                    if ((currRed >= 255 - offset && currGreen <= offset && currBlue <= offset) && (fwdRed <= offset && fwdGreen <= offset && fwdBlue >= 255 - offset)) {
-                        parkArray[0] += 1;
-                    }
+                //if current is mostly white and forward is mostly green, it could be the 2nd spot
+                if ((currRed >= 255 - offset && currGreen >= 255 - offset && currBlue >= 255 - offset) && (fwdRed <= offset && fwdGreen >= 255 && fwdBlue <= offset)) {
+                    parkArray[1] += 1;
+                }
 
-                    //if current is mostly white and forward is mostly green, it could be the 2nd spot
-                    if ((currRed >= 255 - offset && currGreen >= 255 - offset && currBlue >= 255 - offset) && (fwdRed <= offset && fwdGreen >= 255 && fwdBlue <= offset)) {
-                        parkArray[1] += 1;
-                    }
-
-                    //if current is mostly black and forward is mostly yellow, it could be the 3rd spot
-                    if ((currRed <= offset && currGreen <= offset && currBlue <= offset) && (fwdRed >= 255 - offset&& fwdGreen >= 255 - offset && fwdBlue <= offset)) {
-                        parkArray[2] += 1;
-                    }
+                //if current is mostly black and forward is mostly yellow, it could be the 3rd spot
+                if ((currRed <= offset && currGreen <= offset && currBlue <= offset) && (fwdRed >= 255 - offset&& fwdGreen >= 255 - offset && fwdBlue <= offset)) {
+                    parkArray[2] += 1;
                 }
             }
+
 
             //the largest array value will be where to park
             if (parkArray[0] >= parkArray[1] && parkArray[0] >= parkArray[2]) {
@@ -151,5 +163,67 @@ public class WebcamTest extends LinearOpMode {
             telemetry.update();
             return input;
         }
+    }
+    public static List<List<Integer>> balanceImageArray( List<List<Integer>> imageList) {
+        double percent = .05;
+        double clip = percent*imageList.size();
+        clip = (int) clip;
+
+        for (int c = 2; c < 5; c++) { //c refers to the channel, so 2 = red 3 = green or 4 = blue values
+            int newLow = 0;
+            int newHigh = 0;
+
+            int amtClipped = 0;
+            int start = 255;
+            while (amtClipped < clip) {
+                for (int i = 0; i < imageList.size(); i++) {
+                    if (imageList.get(i).get(c) == start) {
+                        amtClipped++;
+                    }
+                }
+                //decrements start val by 1
+                start--;
+            }
+            newHigh = start;
+
+            //comment
+            start = 0;
+            amtClipped = 0;
+            while (amtClipped < clip) {
+                for (int i = 0; i < imageList.size(); i++) {
+                    if (imageList.get(i).get(c) == start) {
+                        amtClipped++;
+                    }
+                }
+                //increments start val by 1 to remove more pixels
+                start++;
+            }
+            newLow = start;
+            System.out.println(newLow);
+
+            //removes pixel vals at the highest ends of the r g b spectrum
+            System.out.println(newHigh);
+            //stretches the channel to fit the full rgb spectrum
+            //for example, say the new highest red value is 247, this turns 247 into 255 and so on
+            for (int i = 0; i < imageList.size(); i++) {
+                if (imageList.get(i).get(c) > newHigh) {
+                    imageList.get(i).set(c,newHigh);
+                }
+                if (imageList.get(i).get(c) < newLow) {
+                    imageList.get(i).set(c, newLow);
+                }
+            }
+
+            for (int i = 0; i < imageList.size(); i++) {
+                if (imageList.get(i).get(c) != 0) {
+                    imageList.get(i).set(c, map_val(imageList.get(i).get(c), newLow, newHigh, 0, 255));
+                }
+            }
+        }
+        return imageList;
+    }
+
+    public static int map_val(int s, int a1, int a2, int b1, int b2) {
+        return  (b1 + ((s - a1) * (b2 - b1) / (a2 - a1)));
     }
 }

@@ -54,19 +54,9 @@ import com.qualcomm.robotcore.util.Range;
 // (line up robot touching back wall at an angle so that driving straight forward corresponds with tallest pole)
 // then, lift arm, drop off pre-load cone
 @Autonomous
-public class Meet0_Auto_Corner extends LinearOpMode {
+public class AutoStrafeLeft extends LinearOpMode {
 
-    // HEY 500 IS A DUMMY NUMMY. CHANGE IT.
-    // ALL SLEEP/TIME VALUES ALSO HOLD DUMMY NUMMIES.
-    final int STOP_DIST_TICKS = 500;
-    final int BACK_UP_TICKS = 250;
-
-    // Used for linear slide
-    private boolean upperBoundHit = false;
-    // MAX_TICKS is the value at the top (don't raise up more than this)
-    // MIN_TICKS is the value at the bottom (don't wind up more than this)
-    final int MAX_TICKS = 500;
-    final int MIN_TICKS = 0;
+    final int MAX_TICKS = 1000;
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -82,16 +72,12 @@ public class Meet0_Auto_Corner extends LinearOpMode {
     private Servo claw;
 
     //encoder/odometry wheel (plugged into an empty motor encoder port)
-    private DcMotor encoder;
+//    private DcMotor encoder;
 
     private boolean slowModeActive = false;
 
     @Override
     public void runOpMode() {
-
-        // HEADS UP
-        // THE MOTOR NAMES REFER TO THE ROBOT FROM BEHIND
-        // FOR EXAMPLE - THE FRONT LEFT MOTOR IS ACTUALLY CALLED THE BACK RIGHT MOTOR IN CODE
 
         // Method to assign and initialize the hardware
         initializeHardware();
@@ -108,55 +94,53 @@ public class Meet0_Auto_Corner extends LinearOpMode {
         if (opModeIsActive()) {
             //close claw to tighten around pre-load cone
             claw.setPosition(1);
+
             //give the claw closing time before jerking forward
-            sleep(100);
-            //go forward x inches towards small junction
-            setMotorPower(.3);
-            sleep(600);
+            sleep(2000);
 
             // Raising claw things
-            while (linearSlide.getCurrentPosition() < MAX_TICKS)
+            while (linearSlide.getCurrentPosition() < MAX_TICKS) {
                 linearSlide.setPower(1);
+                sleep(50);
+            }
             linearSlide.setPower(0);
 
-            //go forward a tiny bit more to orient the claw on top of the cone
-            setMotorPower(.3);
-            sleep(100);
+            //go forward x inches towards small junction
+            setMotorPower(0, .3);
+            sleep(1500);
+
             // drop the cone
             claw.setPosition(0.7);
-            // back-up
-            setMotorPower(-.3);
 
-            // TIME
-            sleep(500);
+            // back up to the wall wall
+            setMotorPower(0, -0.3);
+            sleep(1500);
 
-
+            //strafe x inches left?
             float x = -1;
             float y = 0;
+            setMotorPower(x,y);
+            sleep(3000);
 
-            // Drive Code
-            double lfp = Range.clip(x + y, -0.3, 0.3);
-            double lbp = Range.clip(y - x, -0.3, 0.3);
-
-            double rfp = Range.clip(y - x, -0.3, 0.3);
-            double rbp = Range.clip(x + y, -0.3, 0.3);
-
-            leftFrontDrive.setPower(lfp);
-            leftBackDrive.setPower(lbp);
-            rightBackDrive.setPower(rbp);
-            rightFrontDrive.setPower(rfp);
-
-            sleep(1000);
-            setMotorPower(0);
+            //stop
+            setMotorPower(0, 0);
 
         }
     }
 
-    private void setMotorPower(double power) {
-        leftFrontDrive.setPower(power);
-        leftBackDrive.setPower(power);
-        rightBackDrive.setPower(power);
-        rightFrontDrive.setPower(power);
+    private void setMotorPower(double x, double y) {
+
+        // Drive Code
+        double lfp = Range.clip(x + y, -0.3, 0.3);
+        double lbp = Range.clip(y - x, -0.3, 0.3);
+
+        double rfp = Range.clip(y - x, -0.3, 0.3);
+        double rbp = Range.clip(x + y, -0.3, 0.3);
+
+        leftFrontDrive.setPower(lfp);
+        leftBackDrive.setPower(lbp);
+        rightBackDrive.setPower(rbp);
+        rightFrontDrive.setPower(rfp);
     }
 
     private void initializeHardware() {
@@ -165,7 +149,7 @@ public class Meet0_Auto_Corner extends LinearOpMode {
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
         claw = hardwareMap.get(Servo.class, "claw");
-        encoder = hardwareMap.get(DcMotor.class, "encoder");
+//        encoder = hardwareMap.get(DcMotor.class, "encoder");
 
 
         // Initialize the hardware variables. Note that the strings used here as parameters

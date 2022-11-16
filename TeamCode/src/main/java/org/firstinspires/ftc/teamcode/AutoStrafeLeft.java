@@ -106,20 +106,20 @@ public class AutoStrafeLeft extends LinearOpMode {
             linearSlide.setPower(0);
 
             //go forward x inches towards small junction
-            setMotorPower(0, .3);
+            setMotorPower(0, -.3);
             sleep(1500);
 
             // drop the cone
             claw.setPosition(0.7);
 
             // back up to the wall wall
-            setMotorPower(0, -0.3);
+            setMotorPower(0, 0.3);
             sleep(1500);
 
             //strafe x inches left?
-            float x = -1;
+            float x = 1;
             float y = 0;
-            setMotorPower(x,y);
+            setMotorPower(x, y);
             sleep(3000);
 
             //stop
@@ -137,10 +137,23 @@ public class AutoStrafeLeft extends LinearOpMode {
         double rfp = Range.clip(y - x, -0.3, 0.3);
         double rbp = Range.clip(x + y, -0.3, 0.3);
 
-        leftFrontDrive.setPower(lfp);
-        leftBackDrive.setPower(lbp);
-        rightBackDrive.setPower(rbp);
-        rightFrontDrive.setPower(rfp);
+        float rot = 0;
+        float rotSpeed = 1;
+
+        // Rotational offset code factoring in precalculated drive code
+        lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
+        lbp = Range.clip(lbp - rot / rotSpeed, -1.0, 1.0);
+
+        rfp = Range.clip(rfp + rot / rotSpeed, -1.0, 1.0);
+        rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
+
+        float speedModifier = 1;
+
+        // Send calculated power to wheels
+        rightBackDrive.setPower((-rbp) * speedModifier);
+        rightFrontDrive.setPower((rfp) * speedModifier);
+        leftFrontDrive.setPower((-lfp) * speedModifier);
+        leftBackDrive.setPower((-lbp) * speedModifier);
     }
 
     private void initializeHardware() {
@@ -165,6 +178,22 @@ public class AutoStrafeLeft extends LinearOpMode {
         linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         linearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+        // Setting the motor encoder position to zero
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Ensuring the motors get the instructions
+        sleep(100);
+
+        // This makes sure the motors are moving at the same speed
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
     }

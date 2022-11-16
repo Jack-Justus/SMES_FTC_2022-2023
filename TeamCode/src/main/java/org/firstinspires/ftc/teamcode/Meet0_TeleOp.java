@@ -177,11 +177,11 @@ public class Meet0_TeleOp extends LinearOpMode {
 
         linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        linearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
     }
 
     private void controlLinearSlide() {
-
 
         if (gamepad2.b) {
             // Going up
@@ -216,10 +216,25 @@ public class Meet0_TeleOp extends LinearOpMode {
             // If the current position is valid, we move the motor upwards
             // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
             if ((linearSlide.getCurrentPosition() > MIN_TICKS) && (!lowerBoundHit))
-                linearSlide.setPower(-.5);
+
+                // It needs to move slower compared to how close it is to the bottom
+                if (linearSlide.getCurrentPosition() > 450)
+                    linearSlide.setPower(-1);
+                else if (linearSlide.getCurrentPosition() > 275)
+                    linearSlide.setPower(-.4);
+                else
+                    linearSlide.setPower(-.2);
             else
                 linearSlide.setPower(0);
-        } else {
+        }
+        // The following code is used for emergencies when the encoder has drifted or we need to remove limits for the motor
+        else if (gamepad2.dpad_up)
+            linearSlide.setPower(0.3);
+        else if (gamepad2.dpad_down)
+            linearSlide.setPower(-0.3);
+        else if (gamepad2.dpad_left)
+            linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        else {
             linearSlide.setPower(0);
         }
 

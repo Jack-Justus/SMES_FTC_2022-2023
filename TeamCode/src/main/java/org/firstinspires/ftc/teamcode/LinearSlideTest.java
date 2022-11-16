@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -44,6 +45,7 @@ public class LinearSlideTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private CRServo LinearSlide;
+    private Servo claw = null;
 
     @Override
     public void runOpMode() {
@@ -61,6 +63,7 @@ public class LinearSlideTest extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             controlLinearSlide();
+            controlClaw();
         }
     }
 
@@ -70,21 +73,30 @@ public class LinearSlideTest extends LinearOpMode {
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
         LinearSlide = hardwareMap.get(CRServo.class, "slide");
+        claw = hardwareMap.get(Servo.class, "claw");
 
 
         // Ensuring the motors get the instructions
         sleep(100);
-
-
-
     }
 
     private void controlLinearSlide() {
-        if (gamepad2.b)
+        if (gamepad1.b)
             LinearSlide.setPower(1);
-        else if (gamepad2.a)
+        else if (gamepad1.a)
             LinearSlide.setPower(-1);
         else
             LinearSlide.setPower(0);
     }
+
+    private void controlClaw() {
+        if (gamepad1.x) {
+            claw.setPosition(1);
+        }
+        //set servo to 0
+        if (gamepad1.y) {
+            claw.setPosition(.7);
+        }
+    }
+
 }

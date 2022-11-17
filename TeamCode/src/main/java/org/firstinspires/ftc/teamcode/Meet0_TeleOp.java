@@ -106,6 +106,7 @@ public class Meet0_TeleOp extends LinearOpMode {
         double lbp;
         double rfp;
         double rbp;
+        int slowModeActive = 1;
 
         double speedModifier;
 
@@ -131,9 +132,10 @@ public class Meet0_TeleOp extends LinearOpMode {
                 rotSpeed = 2;
 
             // Slow mode
-            boolean slowModeActive = gamepad1.right_bumper;
+            if (gamepad1.right_bumper)
+                slowModeActive *=-1;
 
-            if (slowModeActive) {
+            if (slowModeActive == -1) {
                 speedModifier = .5;
                 setMotorsBreakMode();
             } else {
@@ -199,7 +201,7 @@ public class Meet0_TeleOp extends LinearOpMode {
 
     private void controlLinearSlide() {
 
-        if (gamepad2.b) {
+        if (gamepad2.a) {
             // Going up
 
             // If the linear slide has hit the top then the upperBoundHit becomes true
@@ -217,7 +219,7 @@ public class Meet0_TeleOp extends LinearOpMode {
             else
                 linearSlide.setPower(0);
 
-        } else if (gamepad2.a) {
+        } else if (gamepad2.b) {
             // Going downa
 
             // If the linear slide has hit the top then the upperBoundHit becomes true

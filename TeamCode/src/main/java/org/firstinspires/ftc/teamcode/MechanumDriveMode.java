@@ -49,7 +49,6 @@ import com.qualcomm.robotcore.util.Range;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-
 @Disabled
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Mech Drive Mode", group = "Linear Opmode")
 public class MechanumDriveMode extends LinearOpMode {
@@ -62,7 +61,7 @@ public class MechanumDriveMode extends LinearOpMode {
     private DcMotor rightBackDrive = null;
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
-    private CRServo armNameHere;
+//    private CRServo armNameHere;
 
     float rfEncoderPosition;
     float rbEncoderPosition;
@@ -197,7 +196,7 @@ public class MechanumDriveMode extends LinearOpMode {
         leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
-        armNameHere = hardwareMap.get(CRServo.class, "clawServo");
+//        armNameHere = hardwareMap.get(CRServo.class, "clawServo");
 
         // Setting the motor encoder position to zero
         leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -318,19 +317,19 @@ public class MechanumDriveMode extends LinearOpMode {
             move(3);
     }
 
-    private void controlArm() {
-
-        // Closing and opening Arm Servo
-
-        // Taking inputs and setting power
-        if (gamepad2.b)
-            armNameHere.setPower(1);
-        else if (gamepad2.a)
-            armNameHere.setPower(-1);
-        else
-            armNameHere.setPower(0);
-
-    }
+//    private void controlArm() {
+//
+//        // Closing and opening Arm Servo
+//
+//        // Taking inputs and setting power
+//        if (gamepad2.b)
+//            armNameHere.setPower(1);
+//        else if (gamepad2.a)
+//            armNameHere.setPower(-1);
+//        else
+//            armNameHere.setPower(0);
+//
+//    }
 
 
     public void setMotorsBreakMode() {

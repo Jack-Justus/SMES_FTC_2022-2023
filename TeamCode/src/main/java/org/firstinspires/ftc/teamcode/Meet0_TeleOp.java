@@ -118,12 +118,14 @@ public class Meet0_TeleOp extends LinearOpMode {
 
             rot = -gamepad1.right_stick_x;
 
-            // Drive Code
-            lfp = Range.clip(x + y, -1.0, 1.0);
-            lbp = Range.clip(y - x, -1.0, 1.0);
+            double maxSpeed = 0.7;
 
-            rfp = Range.clip(y - x, -1.0, 1.0);
-            rbp = Range.clip(x + y, -1.0, 1.0);
+            // Drive Code
+            lfp = Range.clip(x + y, -maxSpeed, maxSpeed);
+            lbp = Range.clip(y - x, -maxSpeed, maxSpeed);
+
+            rfp = Range.clip(y - x, -maxSpeed, maxSpeed);
+            rbp = Range.clip(x + y, -maxSpeed, maxSpeed);
 
             // Fast rotation
             if (gamepad1.right_stick_button)
@@ -136,7 +138,7 @@ public class Meet0_TeleOp extends LinearOpMode {
                 slowModeActive *=-1;
 
             if (slowModeActive == -1) {
-                speedModifier = .5;
+                speedModifier = .2;
                 setMotorsBreakMode();
             } else {
                 speedModifier = 1;
@@ -192,10 +194,10 @@ public class Meet0_TeleOp extends LinearOpMode {
         sleep(100);
 
         // This makes sure the motors are moving at the same speed
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
     }
 
@@ -236,7 +238,7 @@ public class Meet0_TeleOp extends LinearOpMode {
             if ((linearSlide.getCurrentPosition() > MIN_TICKS) && (!lowerBoundHit))
 
                 // It needs to move slower compared to how close it is to the bottom
-                if (linearSlide.getCurrentPosition() > 450)
+                if (linearSlide.getCurrentPosition() > 750)
                     linearSlide.setPower(-1);
                 else if (linearSlide.getCurrentPosition() > 275)
                     linearSlide.setPower(-.4);
@@ -250,9 +252,10 @@ public class Meet0_TeleOp extends LinearOpMode {
             linearSlide.setPower(0.3);
         else if (gamepad2.dpad_down)
             linearSlide.setPower(-0.3);
-        else if (gamepad2.dpad_left)
+        else if (gamepad2.dpad_left) {
             linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        else {
+            linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        } else {
             linearSlide.setPower(0);
         }
 

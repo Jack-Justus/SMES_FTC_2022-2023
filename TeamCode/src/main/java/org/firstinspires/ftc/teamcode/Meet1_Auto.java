@@ -55,7 +55,7 @@ import com.qualcomm.robotcore.util.Range;
 // (line up robot touching back wall at an angle so that driving straight forward corresponds with tallest pole)
 // then, lift arm, drop off pre-load cone
 @Autonomous
-public class Meet0_Auto extends LinearOpMode {
+public class Meet1_Auto extends LinearOpMode {
 
     // HEY 500 IS A DUMMY NUMMY. CHANGE IT.
     // ALL SLEEP/TIME VALUES ALSO HOLD DUMMY NUMMIES.

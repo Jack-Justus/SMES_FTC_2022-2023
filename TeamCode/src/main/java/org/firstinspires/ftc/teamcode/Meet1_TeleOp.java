@@ -54,10 +54,9 @@ import com.qualcomm.robotcore.util.Range;
 // gamepad.2 is "weapons" - claw (x- close, y- open) - slide (a- up, b- down)
 // gamepad.1 is driving - motors dual-stick drive, right bumper for slow mode
 
-// NEED TO DO
-// update linear slide code appropriately with
+
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Normal Drive Mode", group = "Linear Opmode")
-public class Meet0_TeleOp extends LinearOpMode {
+public class Meet1_TeleOp extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -67,6 +66,41 @@ public class Meet0_TeleOp extends LinearOpMode {
     private DcMotor rightBackDrive = null;
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
+
+    // Odometers
+    private DcMotor encoderLeft;
+    private DcMotor encoderRight;
+    private DcMotor encoderAux;
+
+    // Encoder Vars and stuff
+    final static double L = 22.86;      // Distance between encoder 1 and 2 in cm
+    final static double B = 0;          // Distance between the midpoint of encoder 1 and 2 and encoder 3
+    final static double R = 9.8;        // Wheel radius in cm
+    final static double N = 8192;       // Encoder ticks per revolution, REV encoder
+    final static double cm_per_tick = 2.0 * Math.PI * R / N;
+
+    // Odometry math to keep track between updates
+    public int currentRightPosition = 0;
+    public int currentLeftPositions = 0;
+    public int currentAuxPosition = 0;
+
+    private int oldRightPosition = 0;
+    private int oldLeftPosition = 0;
+    private int oldAuxPosition = 0;
+
+    /************
+     * Odometry
+     * Notes:
+     * n1, n2, n3 are encoder values for the left, right and back (aux) omni-wheels
+     * dn1, dn2, dn3 are the differences of encoder values between two reads
+     * dx, dy, dtheta describe the robot movement between two reads (in robot coordinates)
+     * X, Y, Theta are the coordinates on the field and the heading of the robot
+     ************************************/
+
+    // XyhVector is a tuple (x,y,h) where h is the heading of the robot
+
+    public XyhVector START_POS = new XyhVector(213, 102, Math.toRadians(-174));
+    public XyhVector pos = START_POS;
 
     //Slide and Claw Objects
     private DcMotorEx linearSlide = null;
@@ -135,7 +169,7 @@ public class Meet0_TeleOp extends LinearOpMode {
 
             // Slow mode
             if (gamepad1.right_bumper)
-                slowModeActive *=-1;
+                slowModeActive *= -1;
 
             if (slowModeActive == -1) {
                 speedModifier = .2;
@@ -160,11 +194,43 @@ public class Meet0_TeleOp extends LinearOpMode {
 
             controlClaw();
             controlLinearSlide();
+            odometry();
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Motor Power", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
+            telemetry.addData("Speed Modifier", "Master (%.2f), Rotational (%.2f)", speedModifier, rotSpeed);
+            telemetry.update();
         }
+    }
+
+    public void odometry() {
+
+        // Updating these vars
+        oldRightPosition = currentRightPosition;
+        oldLeftPosition = currentLeftPositions;
+        oldAuxPosition = currentAuxPosition;
+
+        // Updating the current encoders pos
+        currentRightPosition = -encoderRight.getCurrentPosition();
+        currentLeftPositions = -encoderLeft.getCurrentPosition();
+        currentAuxPosition = encoderAux.getCurrentPosition();
+
+        int dn1 = currentLeftPositions - oldLeftPosition;
+        int dn2 = currentRightPosition - oldRightPosition;
+        int dn3 = currentAuxPosition - oldAuxPosition;
+
+        // The robot has moved and turned a tiny bit between two measurements:
+        double dtheta = cm_per_tick * (dn2 - dn1) / L;
+        double dx = cm_per_tick * (dn1 + dn2) / 2.0;
+        double dy = cm_per_tick * (dn3 - (dn2 - dn1) * B / L);
+
+        // Small movement of the robot gets added to the field coordinate system:
+        double theta = pos.h + (dtheta / 2.0);
+        pos.x += dx * Math.cos(theta) - dy * Math.sin(theta);
+        pos.y += dx * Math.sin(theta) + dy * Math.cos(theta);
+        pos.h += dtheta;
+
     }
 
     private void initializeHardware() {
@@ -198,6 +264,11 @@ public class Meet0_TeleOp extends LinearOpMode {
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // Setting up the encoders
+        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
+        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
+        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
 
     }
 
@@ -260,7 +331,6 @@ public class Meet0_TeleOp extends LinearOpMode {
         }
 
         telemetry.addData("Slide encoder value: ", linearSlide.getCurrentPosition());
-        telemetry.update();
     }
 
     public void controlClaw() {

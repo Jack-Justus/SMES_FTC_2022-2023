@@ -62,26 +62,10 @@ import java.util.ArrayList;
 // then, lift arm, drop off pre-load cone
 @Autonomous
 public class AprilTagsTest extends LinearOpMode {
-
-    OpenCvCamera webcam;
+    OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
 
-    final int MAX_TICKS = 1000;
-
-    // Declare OpMode members.
-    private ElapsedTime runtime = new ElapsedTime();
-
-    // Left and Right Drive Motor Objects
-    private DcMotor rightFrontDrive;
-    private DcMotor rightBackDrive;
-    private DcMotor leftFrontDrive;
-    private DcMotor leftBackDrive;
-
-    //Slide and Claw Objects
-    private DcMotorEx linearSlide;
-    private Servo claw;
-
-    //april tags set up stuff
+    static final double FEET_PER_METER = 3.28084;
 
     // Lens intrinsics
     // UNITS ARE PIXELS
@@ -92,38 +76,29 @@ public class AprilTagsTest extends LinearOpMode {
     double cx = 402.145;
     double cy = 221.506;
 
-
-    //these numbers correspond to april tags from the 36h11 family
-    int ID_SPOT_1 = 1;
-    int ID_SPOT_2 = 2;
-    int ID_SPOT_3 = 3;
-
-    AprilTagDetection tagOfInterest = null; //current tag that's detected
-
-
     // UNITS ARE METERS
     double tagsize = 0.166;
 
-    int numFramesWithoutDetection = 0;
+    //tags from tag family thing
+    int PARK_LEFT = 3;
+    int PARK_MIDDLE = 15;
+    int PARK_RIGHT = 17;
 
-    final float DECIMATION_HIGH = 3;
-    final float DECIMATION_LOW = 2;
-    final float THRESHOLD_HIGH_DECIMATION_RANGE_METERS = 1.0f;
-    final int THRESHOLD_NUM_FRAMES_NO_DETECTION_BEFORE_LOW_DECIMATION = 4;
+    AprilTagDetection tagOfInterest = null;
 
     @Override
-    public void runOpMode() {
-
+    public void runOpMode()
+    {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "wbcam"), cameraMonitorViewId);
+        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "wbcam"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
 
-        webcam.setPipeline(aprilTagDetectionPipeline);
-        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+        camera.setPipeline(aprilTagDetectionPipeline);
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
             @Override
             public void onOpened() {
-                //change accordingly
-                webcam.startStreaming(1920,1080, OpenCvCameraRotation.UPRIGHT);
+                camera.startStreaming(1920,1080, OpenCvCameraRotation.UPRIGHT);
             }
 
             @Override
@@ -131,50 +106,100 @@ public class AprilTagsTest extends LinearOpMode {
 
             }
         });
-        while (opModeIsActive()) {
-            // Calling getDetectionsUpdate() will only return an object if there was a new frame
-            // processed since the last time we called it. Otherwise, it will return null. This
-            // enables us to only run logic when there has been a new frame, as opposed to the
-            // getLatestDetections() method which will always return an object.
-            ArrayList<AprilTagDetection> detections = aprilTagDetectionPipeline.getDetectionsUpdate();
 
-            if(detections != null) {
-                telemetry.addData("FPS", webcam.getFps());
-                telemetry.addData("Overhead ms", webcam.getOverheadTimeMs());
-                telemetry.addData("Pipeline ms", webcam.getPipelineTimeMs());
+        telemetry.setMsTransmissionInterval(50);
 
-                // If we don't see any tags
-                if(detections.size() == 0) {
-                    numFramesWithoutDetection++;
+        while (!isStarted() && !isStopRequested()) {
+            ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
 
-                    // If we haven't seen a tag for a few frames, lower the decimation
-                    // so we can hopefully pick one up if we're e.g. far back
-                    if(numFramesWithoutDetection >= THRESHOLD_NUM_FRAMES_NO_DETECTION_BEFORE_LOW_DECIMATION) {
-                        aprilTagDetectionPipeline.setDecimation(DECIMATION_LOW);
+            if(currentDetections.size() != 0) {
+                boolean tagFound = false;
+
+                for(AprilTagDetection tag : currentDetections) {
+                    if(tag.id == PARK_LEFT || tag.id == PARK_MIDDLE || tag.id == PARK_RIGHT) {
+                        tagOfInterest = tag;
+                        tagFound = true;
+                        break;
                     }
                 }
-                // We do see tags!
-                else {
-                    numFramesWithoutDetection = 0;
 
-                    // If the target is within 1 meter, turn on high decimation to
-                    // increase the frame rate
-                    if(detections.get(0).pose.z < THRESHOLD_HIGH_DECIMATION_RANGE_METERS) {
-                        aprilTagDetectionPipeline.setDecimation(DECIMATION_HIGH);
+                if(tagFound) {
+                    telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
+                    tagToTelemetry(tagOfInterest);
+                }
+                else
+                {
+                    telemetry.addLine("Don't see tag of interest :(");
+
+                    if(tagOfInterest == null)
+                    {
+                        telemetry.addLine("(The tag has never been seen)");
                     }
-
-                    for(AprilTagDetection detection : detections) {
-                        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
-                        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x));
-                        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y));
-                        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z));
-                        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
-                        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
-                        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
+                    else
+                    {
+                        telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
+                        tagToTelemetry(tagOfInterest);
                     }
                 }
-                telemetry.update();
+
             }
+            else
+            {
+                telemetry.addLine("Don't see tag of interest :(");
+
+                if(tagOfInterest == null)
+                {
+                    telemetry.addLine("(The tag has never been seen)");
+                }
+                else
+                {
+                    telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
+                    tagToTelemetry(tagOfInterest);
+                }
+
+            }
+
+            telemetry.update();
+            sleep(20);
         }
+
+        /* Update the telemetry */
+        if(tagOfInterest != null)
+        {
+            telemetry.addLine("Tag snapshot:\n");
+            tagToTelemetry(tagOfInterest);
+            telemetry.update();
+        }
+        else
+        {
+            telemetry.addLine("No tag snapshot available, it was never sighted during the init loop :(");
+            telemetry.update();
+        }
+
+        //this part will actually park for us
+        if (tagOfInterest.id == PARK_LEFT) {
+            //park in the left square
+        }
+        if (tagOfInterest.id == PARK_MIDDLE || tagOfInterest == null) {
+            //park in the middle square
+        }
+        if (tagOfInterest.id == PARK_RIGHT) {
+            //park in the right square
+        }
+
+
+        /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
+        while (opModeIsActive()) {sleep(20);}
+    }
+
+    void tagToTelemetry(AprilTagDetection detection)
+    {
+        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
+        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
+        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
+        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
+        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
+        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
+        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
     }
 }

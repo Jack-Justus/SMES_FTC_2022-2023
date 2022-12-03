@@ -98,8 +98,8 @@ public class Meet1_TeleOp extends LinearOpMode {
      ************************************/
 
     // XyhVector is a tuple (x,y,h) where h is the heading of the robot
-
-    public XyhVector START_POS = new XyhVector(213, 102, Math.toRadians(-174));
+    // Starting at (0,0) pos with 0 rotation. Our auto will run off of this coordinate system
+    public XyhVector START_POS = new XyhVector(0, 0, Math.toRadians(0));
     public XyhVector pos = START_POS;
 
     //Slide and Claw Objects

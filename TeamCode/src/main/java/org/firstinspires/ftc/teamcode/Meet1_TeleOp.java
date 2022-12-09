@@ -68,25 +68,25 @@ public class Meet1_TeleOp extends LinearOpMode {
     private DcMotor leftBackDrive = null;
 
     // Odometers
-    private DcMotor encoderLeft;
-    private DcMotor encoderRight;
-    private DcMotor encoderAux;
-
-    // Encoder Vars and stuff
-    final static double L = 22.86;      // Distance between encoder 1 and 2 in cm
-    final static double B = 0;          // Distance between the midpoint of encoder 1 and 2 and encoder 3
-    final static double R = 9.8;        // Wheel radius in cm
-    final static double N = 8192;       // Encoder ticks per revolution, REV encoder
-    final static double cm_per_tick = 2.0 * Math.PI * R / N;
-
-    // Odometry math to keep track between updates
-    public int currentRightPosition = 0;
-    public int currentLeftPositions = 0;
-    public int currentAuxPosition = 0;
-
-    private int oldRightPosition = 0;
-    private int oldLeftPosition = 0;
-    private int oldAuxPosition = 0;
+//    private DcMotor encoderLeft;
+//    private DcMotor encoderRight;
+//    private DcMotor encoderAux;
+//
+//    // Encoder Vars and stuff
+//    final static double L = 22.86;      // Distance between encoder 1 and 2 in cm
+//    final static double B = 0;          // Distance between the midpoint of encoder 1 and 2 and encoder 3
+//    final static double R = 9.8;        // Wheel radius in cm
+//    final static double N = 8192;       // Encoder ticks per revolution, REV encoder
+//    final static double cm_per_tick = 2.0 * Math.PI * R / N;
+//
+//    // Odometry math to keep track between updates
+//    public int currentRightPosition = 0;
+//    public int currentLeftPositions = 0;
+//    public int currentAuxPosition = 0;
+//
+//    private int oldRightPosition = 0;
+//    private int oldLeftPosition = 0;
+//    private int oldAuxPosition = 0;
 
     /************
      * Odometry
@@ -104,14 +104,14 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     //Slide and Claw Objects
     private DcMotorEx linearSlide = null;
-    private Servo claw = null;
+    private CRServo claw = null;
 
     // Used for linear slide
     private boolean upperBoundHit = false;
     private boolean lowerBoundHit = false;
     // MAX_TICKS is the value at the top (don't raise up more than this)
     // MIN_TICKS is the value at the bottom (don't wind up more than this)
-    final int MAX_TICKS = 1800;
+    final int MAX_TICKS = 4550;
     final int MIN_TICKS = 0;
 
     @Override
@@ -131,75 +131,18 @@ public class Meet1_TeleOp extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
-        float x;
-        float y;
-        float rot;
-        float rotSpeed;
-
-        double lfp;
-        double lbp;
-        double rfp;
-        double rbp;
-        int slowModeActive = 1;
-
-        double speedModifier;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            x = -gamepad1.left_stick_x;
-            y = gamepad1.left_stick_y;
 
-            rot = -gamepad1.right_stick_x;
-
-            double maxSpeed = 0.7;
-
-            // Drive Code
-            lfp = Range.clip(x + y, -maxSpeed, maxSpeed);
-            lbp = Range.clip(y - x, -maxSpeed, maxSpeed);
-
-            rfp = Range.clip(y - x, -maxSpeed, maxSpeed);
-            rbp = Range.clip(x + y, -maxSpeed, maxSpeed);
-
-            // Fast rotation
-            if (gamepad1.right_stick_button)
-                rotSpeed = 1;
-            else
-                rotSpeed = 2;
-
-            // Slow mode
-            if (gamepad1.right_bumper)
-                slowModeActive *= -1;
-
-            if (slowModeActive == -1) {
-                speedModifier = .2;
-                setMotorsBreakMode();
-            } else {
-                speedModifier = 1;
-                setMotorsFloatMode();
-            }
-
-            // Rotational offset code factoring in precalculated drive code
-            lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
-            lbp = Range.clip(lbp - rot / rotSpeed, -1.0, 1.0);
-
-            rfp = Range.clip(rfp + rot / rotSpeed, -1.0, 1.0);
-            rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
-
-            // Send calculated power to wheels
-            rightBackDrive.setPower((-rbp) * speedModifier);
-            rightFrontDrive.setPower((rfp) * speedModifier);
-            leftFrontDrive.setPower((-lfp) * speedModifier);
-            leftBackDrive.setPower((-lbp) * speedModifier);
-
+            driveCode();
             controlClaw();
             controlLinearSlide();
             odometry();
 
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motor Power", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
-            telemetry.addData("Speed Modifier", "Master (%.2f), Rotational (%.2f)", speedModifier, rotSpeed);
+
+//            telemetry.addData("Slide Encoder", "Value (%.2f)", linearSlide.getCurrentPosition());
             telemetry.update();
         }
     }
@@ -207,30 +150,98 @@ public class Meet1_TeleOp extends LinearOpMode {
     public void odometry() {
 
         // Updating these vars
-        oldRightPosition = currentRightPosition;
-        oldLeftPosition = currentLeftPositions;
-        oldAuxPosition = currentAuxPosition;
+//        oldRightPosition = currentRightPosition;
+//        oldLeftPosition = currentLeftPositions;
+//        oldAuxPosition = currentAuxPosition;
 
         // Updating the current encoders pos
-        currentRightPosition = -encoderRight.getCurrentPosition();
-        currentLeftPositions = -encoderLeft.getCurrentPosition();
-        currentAuxPosition = encoderAux.getCurrentPosition();
+//        currentRightPosition = -encoderRight.getCurrentPosition();
+//        currentLeftPositions = -encoderLeft.getCurrentPosition();
+//        currentAuxPosition = encoderAux.getCurrentPosition();
 
-        int dn1 = currentLeftPositions - oldLeftPosition;
-        int dn2 = currentRightPosition - oldRightPosition;
-        int dn3 = currentAuxPosition - oldAuxPosition;
+//        int dn1 = currentLeftPositions - oldLeftPosition;
+//        int dn2 = currentRightPosition - oldRightPosition;
+//        int dn3 = currentAuxPosition - oldAuxPosition;
+//
+//        // The robot has moved and turned a tiny bit between two measurements:
+//        double dtheta = cm_per_tick * (dn2 - dn1) / L;
+//        double dx = cm_per_tick * (dn1 + dn2) / 2.0;
+//        double dy = cm_per_tick * (dn3 - (dn2 - dn1) * B / L);
+//
+//        // Small movement of the robot gets added to the field coordinate system:
+//        double theta = pos.h + (dtheta / 2.0);
+//        pos.x += dx * Math.cos(theta) - dy * Math.sin(theta);
+//        pos.y += dx * Math.sin(theta) + dy * Math.cos(theta);
+//        pos.h += dtheta;
 
-        // The robot has moved and turned a tiny bit between two measurements:
-        double dtheta = cm_per_tick * (dn2 - dn1) / L;
-        double dx = cm_per_tick * (dn1 + dn2) / 2.0;
-        double dy = cm_per_tick * (dn3 - (dn2 - dn1) * B / L);
+    }
 
-        // Small movement of the robot gets added to the field coordinate system:
-        double theta = pos.h + (dtheta / 2.0);
-        pos.x += dx * Math.cos(theta) - dy * Math.sin(theta);
-        pos.y += dx * Math.sin(theta) + dy * Math.cos(theta);
-        pos.h += dtheta;
+    private void driveCode() {
 
+        double lfp;
+        double lbp;
+        double rfp;
+        double rbp;
+
+        float x;
+        float y;
+        float rot;
+        float rotSpeed;
+
+
+        int slowModeActive = 1;
+
+        double speedModifier;
+
+        x = -gamepad1.left_stick_x;
+        y = gamepad1.left_stick_y;
+
+        rot = -gamepad1.right_stick_x;
+
+        double maxSpeed = 0.7;
+
+        // Drive Code
+        lfp = Range.clip(x + y, -maxSpeed, maxSpeed);
+        lbp = Range.clip(y - x, -maxSpeed, maxSpeed);
+
+        rfp = Range.clip(y - x, -maxSpeed, maxSpeed);
+        rbp = Range.clip(x + y, -maxSpeed, maxSpeed);
+
+        // Fast rotation
+        if (gamepad1.right_stick_button)
+            rotSpeed = 1;
+        else
+            rotSpeed = 2;
+
+        // Slow mode
+        if (gamepad1.right_bumper)
+            slowModeActive *= -1;
+
+        if (slowModeActive == -1) {
+            speedModifier = 1;
+            setMotorsBreakMode();
+        } else {
+            speedModifier = 0.2;
+            setMotorsFloatMode();
+        }
+
+        // Rotational offset code factoring in precalculated drive code
+        lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
+        lbp = Range.clip(lbp - rot / rotSpeed, -1.0, 1.0);
+
+        rfp = Range.clip(rfp + rot / rotSpeed, -1.0, 1.0);
+        rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
+
+        // Send calculated power to wheels
+        rightBackDrive.setPower((-rbp) * speedModifier);
+        rightFrontDrive.setPower((rfp) * speedModifier);
+        leftFrontDrive.setPower((-lfp) * speedModifier);
+        leftBackDrive.setPower((-lbp) * speedModifier);
+
+        // Show the elapsed game time and wheel power.
+        telemetry.addData("Status", "Run Time: " + runtime.toString());
+        telemetry.addData("Motor Power", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
+        telemetry.addData("Speed Modifier", "Master (%.2f), Rotational (%.2f)", speedModifier, rotSpeed);
     }
 
     private void initializeHardware() {
@@ -243,7 +254,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
         linearSlide = hardwareMap.get(DcMotorEx.class, "slide");
-        claw = hardwareMap.get(Servo.class, "claw");
+        claw = hardwareMap.get(CRServo.class, "claw");
 
         linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -266,9 +277,9 @@ public class Meet1_TeleOp extends LinearOpMode {
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Setting up the encoders
-        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
-        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
-        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
+//        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
+//        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
+//        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
 
     }
 
@@ -287,10 +298,12 @@ public class Meet1_TeleOp extends LinearOpMode {
 
             // If the current position is valid, we move the motor upwards
             // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
-            if ((linearSlide.getCurrentPosition() < MAX_TICKS) && (!upperBoundHit))
+            if ((linearSlide.getCurrentPosition() < MAX_TICKS - 150) && (!upperBoundHit))
                 linearSlide.setPower(1);
+            else if ((linearSlide.getCurrentPosition() < MAX_TICKS && (!upperBoundHit)))
+                linearSlide.setPower(0.2);
             else
-                linearSlide.setPower(0);
+                linearSlide.setPower(0.1);
 
         } else if (gamepad2.b) {
             // Going downa
@@ -339,10 +352,12 @@ public class Meet1_TeleOp extends LinearOpMode {
         //set servo to 180
         if (gamepad2.x) {
             double CLAW_CLOSED = 1;
-            claw.setPosition(CLAW_CLOSED);
+            claw.setPower(CLAW_CLOSED);
         } else if (gamepad2.y) {
-            double CLAW_OPEN = .7;
-            claw.setPosition(CLAW_OPEN);
+            double CLAW_OPEN = -1;
+            claw.setPower(CLAW_OPEN);
+        } else {
+            claw.setPower(0);
         }
 
 

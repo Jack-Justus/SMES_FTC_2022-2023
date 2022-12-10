@@ -68,9 +68,9 @@ public class Meet1_TeleOp extends LinearOpMode {
     private DcMotor leftBackDrive = null;
 
     // Odometers
-    private DcMotor encoderLeft;
-    private DcMotor encoderRight;
-    private DcMotor encoderAux;
+//    private DcMotor encoderLeft;
+//    private DcMotor encoderRight;
+//    private DcMotor encoderAux;
 
     // Encoder Vars and stuff
     final static double L = 22.86;      // Distance between encoder 1 and 2 in cm
@@ -80,13 +80,13 @@ public class Meet1_TeleOp extends LinearOpMode {
     final static double cm_per_tick = 2.0 * Math.PI * R / N;
 
     // Odometry math to keep track between updates
-    public int currentRightPosition = 0;
-    public int currentLeftPositions = 0;
-    public int currentAuxPosition = 0;
-
-    private int oldRightPosition = 0;
-    private int oldLeftPosition = 0;
-    private int oldAuxPosition = 0;
+//    public int currentRightPosition = 0;
+//    public int currentLeftPositions = 0;
+//    public int currentAuxPosition = 0;
+//
+//    private int oldRightPosition = 0;
+//    private int oldLeftPosition = 0;
+//    private int oldAuxPosition = 0;
 
     /************
      * Odometry
@@ -99,19 +99,19 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     // XyhVector is a tuple (x,y,h) where h is the heading of the robot
     // Starting at (0,0) pos with 0 rotation. Our auto will run off of this coordinate system
-    public XyhVector START_POS = new XyhVector(0, 0, Math.toRadians(0));
-    public XyhVector pos = START_POS;
+//    public XyhVector START_POS = new XyhVector(0, 0, Math.toRadians(0));
+//    public XyhVector pos = START_POS;
 
     //Slide and Claw Objects
     private DcMotorEx linearSlide = null;
-    private Servo claw = null;
+    private CRServo claw = null;
 
     // Used for linear slide
     private boolean upperBoundHit = false;
     private boolean lowerBoundHit = false;
     // MAX_TICKS is the value at the top (don't raise up more than this)
     // MIN_TICKS is the value at the bottom (don't wind up more than this)
-    final int MAX_TICKS = 1800;
+    final int MAX_TICKS = 4200;
     final int MIN_TICKS = 0;
 
     @Override
@@ -172,7 +172,7 @@ public class Meet1_TeleOp extends LinearOpMode {
                 slowModeActive *= -1;
 
             if (slowModeActive == -1) {
-                speedModifier = .2;
+                speedModifier = .4;
                 setMotorsBreakMode();
             } else {
                 speedModifier = 1;
@@ -207,29 +207,29 @@ public class Meet1_TeleOp extends LinearOpMode {
     public void odometry() {
 
         // Updating these vars
-        oldRightPosition = currentRightPosition;
-        oldLeftPosition = currentLeftPositions;
-        oldAuxPosition = currentAuxPosition;
+//        oldRightPosition = currentRightPosition;
+//        oldLeftPosition = currentLeftPositions;
+//        oldAuxPosition = currentAuxPosition;
 
         // Updating the current encoders pos
-        currentRightPosition = -encoderRight.getCurrentPosition();
-        currentLeftPositions = -encoderLeft.getCurrentPosition();
-        currentAuxPosition = encoderAux.getCurrentPosition();
+//        currentRightPosition = -encoderRight.getCurrentPosition();
+//        currentLeftPositions = -encoderLeft.getCurrentPosition();
+//        currentAuxPosition = encoderAux.getCurrentPosition();
 
-        int dn1 = currentLeftPositions - oldLeftPosition;
-        int dn2 = currentRightPosition - oldRightPosition;
-        int dn3 = currentAuxPosition - oldAuxPosition;
+//        int dn1 = currentLeftPositions - oldLeftPosition;
+//        int dn2 = currentRightPosition - oldRightPosition;
+//        int dn3 = currentAuxPosition - oldAuxPosition;
 
         // The robot has moved and turned a tiny bit between two measurements:
-        double dtheta = cm_per_tick * (dn2 - dn1) / L;
-        double dx = cm_per_tick * (dn1 + dn2) / 2.0;
-        double dy = cm_per_tick * (dn3 - (dn2 - dn1) * B / L);
-
-        // Small movement of the robot gets added to the field coordinate system:
-        double theta = pos.h + (dtheta / 2.0);
-        pos.x += dx * Math.cos(theta) - dy * Math.sin(theta);
-        pos.y += dx * Math.sin(theta) + dy * Math.cos(theta);
-        pos.h += dtheta;
+//        double dtheta = cm_per_tick * (dn2 - dn1) / L;
+//        double dx = cm_per_tick * (dn1 + dn2) / 2.0;
+//        double dy = cm_per_tick * (dn3 - (dn2 - dn1) * B / L);
+//
+//        // Small movement of the robot gets added to the field coordinate system:
+//        double theta = pos.h + (dtheta / 2.0);
+//        pos.x += dx * Math.cos(theta) - dy * Math.sin(theta);
+//        pos.y += dx * Math.sin(theta) + dy * Math.cos(theta);
+//        pos.h += dtheta;
 
     }
 
@@ -243,7 +243,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
         linearSlide = hardwareMap.get(DcMotorEx.class, "slide");
-        claw = hardwareMap.get(Servo.class, "claw");
+        claw = hardwareMap.get(CRServo.class, "claw");
 
         linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -266,9 +266,9 @@ public class Meet1_TeleOp extends LinearOpMode {
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Setting up the encoders
-        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
-        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
-        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
+//        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
+//        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
+//        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
 
     }
 
@@ -339,10 +339,12 @@ public class Meet1_TeleOp extends LinearOpMode {
         //set servo to 180
         if (gamepad2.x) {
             double CLAW_CLOSED = 1;
-            claw.setPosition(CLAW_CLOSED);
+            claw.setPower(1);
         } else if (gamepad2.y) {
             double CLAW_OPEN = .7;
-            claw.setPosition(CLAW_OPEN);
+            claw.setPower(-1);
+        } else {
+            claw.setPower(0);
         }
 
 

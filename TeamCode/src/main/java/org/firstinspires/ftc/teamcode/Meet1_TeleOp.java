@@ -99,8 +99,8 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     // XyhVector is a tuple (x,y,h) where h is the heading of the robot
     // Starting at (0,0) pos with 0 rotation. Our auto will run off of this coordinate system
-    public XyhVector START_POS = new XyhVector(0, 0, Math.toRadians(0));
-    public XyhVector pos = START_POS;
+//    public XyhVector START_POS = new XyhVector(0, 0, Math.toRadians(0));
+//    public XyhVector pos = START_POS;
 
     //Slide and Claw Objects
     private DcMotorEx linearSlide = null;
@@ -147,35 +147,6 @@ public class Meet1_TeleOp extends LinearOpMode {
         }
     }
 
-    public void odometry() {
-
-        // Updating these vars
-//        oldRightPosition = currentRightPosition;
-//        oldLeftPosition = currentLeftPositions;
-//        oldAuxPosition = currentAuxPosition;
-
-        // Updating the current encoders pos
-//        currentRightPosition = -encoderRight.getCurrentPosition();
-//        currentLeftPositions = -encoderLeft.getCurrentPosition();
-//        currentAuxPosition = encoderAux.getCurrentPosition();
-
-//        int dn1 = currentLeftPositions - oldLeftPosition;
-//        int dn2 = currentRightPosition - oldRightPosition;
-//        int dn3 = currentAuxPosition - oldAuxPosition;
-//
-//        // The robot has moved and turned a tiny bit between two measurements:
-//        double dtheta = cm_per_tick * (dn2 - dn1) / L;
-//        double dx = cm_per_tick * (dn1 + dn2) / 2.0;
-//        double dy = cm_per_tick * (dn3 - (dn2 - dn1) * B / L);
-//
-//        // Small movement of the robot gets added to the field coordinate system:
-//        double theta = pos.h + (dtheta / 2.0);
-//        pos.x += dx * Math.cos(theta) - dy * Math.sin(theta);
-//        pos.y += dx * Math.sin(theta) + dy * Math.cos(theta);
-//        pos.h += dtheta;
-
-    }
-
     private void driveCode() {
 
         double lfp;
@@ -218,10 +189,10 @@ public class Meet1_TeleOp extends LinearOpMode {
             slowModeActive *= -1;
 
         if (slowModeActive == -1) {
-            speedModifier = 1;
+            speedModifier = .4;
             setMotorsBreakMode();
         } else {
-            speedModifier = 0.2;
+            speedModifier = 1;
             setMotorsFloatMode();
         }
 
@@ -238,10 +209,46 @@ public class Meet1_TeleOp extends LinearOpMode {
         leftFrontDrive.setPower((-lfp) * speedModifier);
         leftBackDrive.setPower((-lbp) * speedModifier);
 
+        controlClaw();
+        controlLinearSlide();
+        odometry();
+
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Motor Power", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
         telemetry.addData("Speed Modifier", "Master (%.2f), Rotational (%.2f)", speedModifier, rotSpeed);
+        telemetry.update();
+
+
+    }
+
+    public void odometry() {
+
+        // Updating these vars
+//        oldRightPosition = currentRightPosition;
+//        oldLeftPosition = currentLeftPositions;
+//        oldAuxPosition = currentAuxPosition;
+
+        // Updating the current encoders pos
+//        currentRightPosition = -encoderRight.getCurrentPosition();
+//        currentLeftPositions = -encoderLeft.getCurrentPosition();
+//        currentAuxPosition = encoderAux.getCurrentPosition();
+
+//        int dn1 = currentLeftPositions - oldLeftPosition;
+//        int dn2 = currentRightPosition - oldRightPosition;
+//        int dn3 = currentAuxPosition - oldAuxPosition;
+
+        // The robot has moved and turned a tiny bit between two measurements:
+//        double dtheta = cm_per_tick * (dn2 - dn1) / L;
+//        double dx = cm_per_tick * (dn1 + dn2) / 2.0;
+//        double dy = cm_per_tick * (dn3 - (dn2 - dn1) * B / L);
+//
+//        // Small movement of the robot gets added to the field coordinate system:
+//        double theta = pos.h + (dtheta / 2.0);
+//        pos.x += dx * Math.cos(theta) - dy * Math.sin(theta);
+//        pos.y += dx * Math.sin(theta) + dy * Math.cos(theta);
+//        pos.h += dtheta;
+
     }
 
     private void initializeHardware() {
@@ -352,10 +359,10 @@ public class Meet1_TeleOp extends LinearOpMode {
         //set servo to 180
         if (gamepad2.x) {
             double CLAW_CLOSED = 1;
-            claw.setPower(CLAW_CLOSED);
+            claw.setPower(1);
         } else if (gamepad2.y) {
-            double CLAW_OPEN = -1;
-            claw.setPower(CLAW_OPEN);
+            double CLAW_OPEN = .7;
+            claw.setPower(-1);
         } else {
             claw.setPower(0);
         }

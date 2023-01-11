@@ -115,7 +115,7 @@ public class Meet1_TeleOp extends LinearOpMode {
     private boolean lowerBoundHit = false;
     // MAX_TICKS is the value at the top (don't raise up more than this)
     // MIN_TICKS is the value at the bottom (don't wind up more than this)
-    final int MAX_TICKS = 4550;
+    final int MAX_TICKS = 3250;
     final int MIN_TICKS = 0;
 
     @Override
@@ -152,7 +152,7 @@ public class Meet1_TeleOp extends LinearOpMode {
             controlHorizontalSlide();
 
             // No driver controls this
-            odometry();
+            //odometry();
 
 
 //            telemetry.addData("Slide Encoder", "Value (%.2f)", linearSlide.getCurrentPosition());
@@ -216,6 +216,9 @@ public class Meet1_TeleOp extends LinearOpMode {
         x = -gp.left_stick_x;
         y = gp.left_stick_y;
 
+//        x = (float) ((runtime.milliseconds() % 5000) / 5000);
+//        y = (float) (((runtime.milliseconds() + 2500) % 5000) / 5000);
+
         rot = -gp.right_stick_x;
 
         double maxSpeed = 0.7;
@@ -255,7 +258,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
 
         // Send calculated power to wheels
-        rightBackDrive.setPower((-rbp) * speedModifier);
+        rightBackDrive.setPower((rbp) * speedModifier);
         rightFrontDrive.setPower((rfp) * speedModifier);
         leftFrontDrive.setPower((-lfp) * speedModifier);
         leftBackDrive.setPower((-lbp) * speedModifier);
@@ -264,6 +267,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Motor Power", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
         telemetry.addData("Speed Modifier", "Master (%.2f), Rotational (%.2f)", speedModifier, rotSpeed);
+        telemetry.addData("Slide encoder value: ", vertLinearSlide.getCurrentPosition());
         telemetry.update();
 
 
@@ -383,7 +387,7 @@ public class Meet1_TeleOp extends LinearOpMode {
             if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS - 150) && (!upperBoundHit))
                 vertLinearSlide.setPower(1);
             else if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS && (!upperBoundHit)))
-                vertLinearSlide.setPower(0.2);
+                vertLinearSlide.setPower(0.3);
             else
                 vertLinearSlide.setPower(0.1);
 
@@ -424,8 +428,6 @@ public class Meet1_TeleOp extends LinearOpMode {
         } else {
             vertLinearSlide.setPower(0);
         }
-
-        telemetry.addData("Slide encoder value: ", vertLinearSlide.getCurrentPosition());
     }
 
     public void controlClaw() {

@@ -67,6 +67,16 @@ public class AprilTagsTest extends LinearOpMode {
 
     static final double FEET_PER_METER = 3.28084;
 
+    private DcMotor rightFrontDrive = null;
+    private DcMotor rightBackDrive = null;
+    private DcMotor leftFrontDrive = null;
+    private DcMotor leftBackDrive = null;
+    private DcMotor vertLinearSlide = null;
+    private Servo claw = null;
+
+    // hor slide (no claw)
+    private DcMotor horLinearSlide = null;
+
     // Lens intrinsics
     // UNITS ARE PIXELS
     // NOTE: this calibration is for the C920 webcam at 800x448.
@@ -88,6 +98,13 @@ public class AprilTagsTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
+        initializeHardware();
+
+        //put code up until it detects the tag here
+
+
+        //detection stuff happens, skip to line 186
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "wbcam"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -126,10 +143,10 @@ public class AprilTagsTest extends LinearOpMode {
                     tagToTelemetry(tagOfInterest);
                 }
                 else {
-                    telemetry.addLine("Don't see tag of interest :(");
+                    telemetry.addLine("Don't see any parking tags");
 
                     if(tagOfInterest == null) {
-                        telemetry.addLine("(The tag has never been seen)");
+                        telemetry.addLine("Don't see any parking tags");
                     }
                     else {
                         telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
@@ -139,18 +156,16 @@ public class AprilTagsTest extends LinearOpMode {
 
             }
             else {
-                telemetry.addLine("Don't see tag of interest :(");
+                telemetry.addLine("Don't see tags");
 
                 if(tagOfInterest == null) {
-                    telemetry.addLine("(The tag has never been seen)");
+                    telemetry.addLine("tags not seen");
                 }
                 else {
                     telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
                     tagToTelemetry(tagOfInterest);
                 }
-
             }
-
             telemetry.update();
             sleep(20);
         }
@@ -167,6 +182,7 @@ public class AprilTagsTest extends LinearOpMode {
         }
 
         //this part will actually park for us
+        //you can ignore everything above this if you want
         if (tagOfInterest.id == PARK_LEFT) {
             //park in the left square
         }
@@ -191,5 +207,49 @@ public class AprilTagsTest extends LinearOpMode {
         telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
         telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
         telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
+    }
+    private void initializeHardware() {
+
+        // Initialize the hardware variables. Note that the strings used here as parameters
+        // to 'get' must correspond to the names assigned during the robot configuration
+        // step (using the FTC Robot Controller app on the phone).
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
+        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
+        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+        vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
+        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
+        claw = hardwareMap.get(Servo.class, "claw");
+
+        // init slides
+        vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        vertLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        vertLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        horLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        horLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        horLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+        // Setting the motor encoder position to zero
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Ensuring the motors get the instructions
+        sleep(100);
+
+        // This makes sure the motors are moving at the same speed
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // Setting up the encoders
+//        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
+//        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
+//        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
+
     }
 }

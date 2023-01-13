@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -104,7 +105,7 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     // vert Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
-    private Servo claw = null;
+    private CRServo claw = null;
 
     // hor slide (no claw)
     private DcMotor horLinearSlide = null;
@@ -313,7 +314,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
         horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
-        claw = hardwareMap.get(Servo.class, "claw");
+        claw = hardwareMap.get(CRServo.class, "claw");
 
         // init slides
         vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -449,9 +450,11 @@ public class Meet1_TeleOp extends LinearOpMode {
         double CLAW_OPEN = 0;
 
         if (gp.x)
-            claw.setPosition(CLAW_CLOSED);
+            claw.setPower(1);
         else if (gp.y)
-            claw.setPosition(CLAW_OPEN);
+            claw.setPower(-1);
+        else
+            claw.setPower(0);
 
 
     }

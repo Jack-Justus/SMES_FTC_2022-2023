@@ -38,6 +38,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
+import org.firstinspires.ftc.teamcode.util.Encoder;
+
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
  * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
@@ -68,47 +71,15 @@ public class Meet1_TeleOp extends LinearOpMode {
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
 
-    // Odometers
-//    private DcMotor encoderLeft;
-//    private DcMotor encoderRight;
-//    private DcMotor encoderAux;
-//
-//    // Encoder Vars and stuff
-//    final static double L = 22.86;      // Distance between encoder 1 and 2 in cm
-//    final static double B = 0;          // Distance between the midpoint of encoder 1 and 2 and encoder 3
-//    final static double R = 9.8;        // Wheel radius in cm
-//    final static double N = 8192;       // Encoder ticks per revolution, REV encoder
-//    final static double cm_per_tick = 2.0 * Math.PI * R / N;
-//
-//    // Odometry math to keep track between updates
-//    public int currentRightPosition = 0;
-//    public int currentLeftPositions = 0;
-//    public int currentAuxPosition = 0;
-//
-//    private int oldRightPosition = 0;
-//    private int oldLeftPosition = 0;
-//    private int oldAuxPosition = 0;
-
-    /************
-     * Odometry
-     * Notes:
-     * n1, n2, n3 are encoder values for the left, right and back (aux) omni-wheels
-     * dn1, dn2, dn3 are the differences of encoder values between two reads
-     * dx, dy, dtheta describe the robot movement between two reads (in robot coordinates)
-     * X, Y, Theta are the coordinates on the field and the heading of the robot
-     ************************************/
-
-    // XyhVector is a tuple (x,y,h) where h is the heading of the robot
-    // Starting at (0,0) pos with 0 rotation. Our auto will run off of this coordinate system
-//    public XyhVector START_POS = new XyhVector(0, 0, Math.toRadians(0));
-//    public XyhVector pos = START_POS;
-
     // vert Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
     private CRServo claw = null;
 
     // hor slide (no claw)
-    private DcMotor horLinearSlide = null;
+//    private DcMotor horLinearSlide = null;
+
+    // Encoders
+    StandardTrackingWheelLocalizer encoders;
 
 
     // Used for vert linear slide
@@ -150,14 +121,13 @@ public class Meet1_TeleOp extends LinearOpMode {
             controlVertSlide();
 
             // The Horizontal slide is controlled by gamepad1
-            controlHorizontalSlide();
+            //controlHorizontalSlide();
 
             // No driver controls this
             //odometry();
 
 
 //            telemetry.addData("Slide Encoder", "Value (%.2f)", linearSlide.getCurrentPosition());
-            telemetry.update();
         }
     }
 
@@ -165,6 +135,8 @@ public class Meet1_TeleOp extends LinearOpMode {
 
         /***********************
          * HORIZONTAL SLIDE HARDWARE MAP
+         *
+         * DEPRACATED
          *
          *      BUTTON A:
          * SLIDE IN
@@ -176,14 +148,14 @@ public class Meet1_TeleOp extends LinearOpMode {
          *
          *********************/
 
-        Gamepad gp = gamepad1;
+//        Gamepad gp = gamepad1;
 
-        if (gp.a)
-            horLinearSlide.setPower(1);
-        else if (gp.b)
-            horLinearSlide.setPower(-1);
-        else
-            horLinearSlide.setPower(0);
+//        if (gp.a)
+//            horLinearSlide.setPower(1);
+//        else if (gp.b)
+//            horLinearSlide.setPower(-1);
+//        else
+//            horLinearSlide.setPower(0);
     }
 
     private void driveCode() {
@@ -269,6 +241,9 @@ public class Meet1_TeleOp extends LinearOpMode {
         telemetry.addData("Motor Power", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
         telemetry.addData("Speed Modifier", "Master (%.2f), Rotational (%.2f)", speedModifier, rotSpeed);
         telemetry.addData("Slide encoder value: ", vertLinearSlide.getCurrentPosition());
+        telemetry.addData("Left Encoder", encoders.getWheelPositions().get(0));
+        telemetry.addData("Right Encoder", encoders.getWheelPositions().get(1));
+        telemetry.addData("Front Encoder", encoders.getWheelPositions().get(2));
         telemetry.update();
 
 
@@ -313,7 +288,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
-        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
+//        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
         claw = hardwareMap.get(CRServo.class, "claw");
 
         // init slides
@@ -321,9 +296,9 @@ public class Meet1_TeleOp extends LinearOpMode {
         vertLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         vertLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        horLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        horLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        horLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        horLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        horLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        horLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
         // Setting the motor encoder position to zero
@@ -346,6 +321,10 @@ public class Meet1_TeleOp extends LinearOpMode {
 //        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
 //        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
 
+        // Encoders
+        encoders = new StandardTrackingWheelLocalizer(hardwareMap);
+
+        setMotorsBreakMode();
     }
 
     private void controlVertSlide() {
@@ -353,10 +332,10 @@ public class Meet1_TeleOp extends LinearOpMode {
         /**********************
          *  VERT SLIDE HARDWARE MAP
          *
-         *      BUTTON A:
+         *      BUTTON B:
          *  SLIDE UP
          *
-         *      BUTTON B:
+         *      BUTTON A:
          *  SLIDE DOWN
          *
          *      dpad UP:
@@ -372,63 +351,106 @@ public class Meet1_TeleOp extends LinearOpMode {
 
         Gamepad gp = gamepad2;
 
-        if (gp.a) {
-            // Going up
+        final int PILOT_MODE = 2;
+        // 1 Uses buttons
+        // 2 Uses stick
 
-            // If the linear slide has hit the top then the upperBoundHit becomes true
-            // We can only move the linear slide up if upperBoundHit is false
-            // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
-            if (vertLinearSlide.getCurrentPosition() >= MAX_TICKS)
-                upperBoundHit = true;
-            else if (vertLinearSlide.getCurrentPosition() < MAX_TICKS - 100)
-                upperBoundHit = false;
+        switch (PILOT_MODE) {
+            case 1:
+                if (gp.b) {
+                    // Going up
 
-            // If the current position is valid, we move the motor upwards
-            // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
-            if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS - 150) && (!upperBoundHit))
-                vertLinearSlide.setPower(1);
-            else if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS && (!upperBoundHit)))
-                vertLinearSlide.setPower(0.3);
-            else
-                vertLinearSlide.setPower(0.1);
+                    // If the linear slide has hit the top then the upperBoundHit becomes true
+                    // We can only move the linear slide up if upperBoundHit is false
+                    // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
+                    if (vertLinearSlide.getCurrentPosition() >= MAX_TICKS)
+                        upperBoundHit = true;
+                    else if (vertLinearSlide.getCurrentPosition() < MAX_TICKS - 100)
+                        upperBoundHit = false;
 
-        } else if (gp.b) {
-            // Going downa
+                    // If the current position is valid, we move the motor upwards
+                    // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
+                    if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS - 150) && (!upperBoundHit))
+                        vertLinearSlide.setPower(1);
+                    else if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS && (!upperBoundHit)))
+                        vertLinearSlide.setPower(0.4);
+                    else
+                        vertLinearSlide.setPower(0.2);
 
-            // If the linear slide has hit the top then the upperBoundHit becomes true
-            // We can only move the linear slide up if upperBoundHit is false
-            // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
-            if (vertLinearSlide.getCurrentPosition() <= MIN_TICKS + 25)
-                lowerBoundHit = true;
-            else if (vertLinearSlide.getCurrentPosition() > MIN_TICKS)
-                lowerBoundHit = false;
+                } else if (gp.a) {
+                    // Going down
+
+                    // If the linear slide has hit the top then the upperBoundHit becomes true
+                    // We can only move the linear slide up if upperBoundHit is false
+                    // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
+                    if (vertLinearSlide.getCurrentPosition() <= MIN_TICKS + 25)
+                        lowerBoundHit = true;
+                    else if (vertLinearSlide.getCurrentPosition() > MIN_TICKS)
+                        lowerBoundHit = false;
 
 
-            // If the current position is valid, we move the motor upwards
-            // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
-            if ((vertLinearSlide.getCurrentPosition() > MIN_TICKS) && (!lowerBoundHit))
+                    // If the current position is valid, we move the motor upwards
+                    // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
+                    if ((vertLinearSlide.getCurrentPosition() > MIN_TICKS) && (!lowerBoundHit))
 
-                // It needs to move slower compared to how close it is to the bottom
-                if (vertLinearSlide.getCurrentPosition() > 750)
-                    vertLinearSlide.setPower(-1);
-                else if (vertLinearSlide.getCurrentPosition() > 275)
-                    vertLinearSlide.setPower(-.4);
-                else
-                    vertLinearSlide.setPower(-.2);
-            else
-                vertLinearSlide.setPower(0);
+                        // It needs to move slower compared to how close it is to the bottom
+                        if (vertLinearSlide.getCurrentPosition() > 750)
+                            vertLinearSlide.setPower(-1);
+                        else if (vertLinearSlide.getCurrentPosition() > 400)
+                            vertLinearSlide.setPower(-.4);
+                        else
+                            vertLinearSlide.setPower(-.2);
+                    else
+                        vertLinearSlide.setPower(0);
+                }
+                // The following code is used for emergencies when the encoder has drifted or we need to remove limits for the motor
+                else if (gp.dpad_up)
+                    vertLinearSlide.setPower(0.4);
+                else if (gp.dpad_down)
+                    vertLinearSlide.setPower(-0.3);
+                else if (gp.dpad_left) {
+                    vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    vertLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                } else if (vertLinearSlide.getCurrentPosition() > 1000)
+                    vertLinearSlide.setPower(0.2);
+                else {
+
+                    vertLinearSlide.setPower(0);
+                }
+                break;
+            case 2:
+                // starting power
+                double power = -gp.right_stick_y;
+
+                // Manual controls
+                if (gp.dpad_up)
+                    power = 0.4;
+                else if (gp.dpad_down)
+                    power = -0.3;
+                else if (gp.dpad_left) {
+                    vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    vertLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                } else {
+                    // Power modification
+
+//                     keeping the slide extended against gravity
+                    if (vertLinearSlide.getCurrentPosition() > 1000)
+                        power += 0.2;
+                    else if (vertLinearSlide.getCurrentPosition() < 400)
+                        // Goes up faster and down slower if we are at the bottom
+                        if (power > 0)
+                            power = power * 0.6;
+                        else
+                            power = power * 0.3;
+
+                }
+
+                // modifying power based on slide position
+
+                vertLinearSlide.setPower(power);
+                break;
         }
-        // The following code is used for emergencies when the encoder has drifted or we need to remove limits for the motor
-        else if (gp.dpad_up)
-            vertLinearSlide.setPower(0.3);
-        else if (gp.dpad_down)
-            vertLinearSlide.setPower(-0.3);
-        else if (gp.dpad_left) {
-            vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            vertLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        } else {
-            vertLinearSlide.setPower(0);
-        }
+
     }
 
     public void controlClaw() {
@@ -438,10 +460,10 @@ public class Meet1_TeleOp extends LinearOpMode {
         /**********************
          * CLAW MAP
          *
-         *      BUTTON X:
+         *      L Trigger:
          * CLOSE CLAW
          *
-         *      BUTTON Y:
+         *      R Trigger:
          * OPEN CLAW
          *
          *********************/
@@ -449,10 +471,10 @@ public class Meet1_TeleOp extends LinearOpMode {
         double CLAW_CLOSED = 1;
         double CLAW_OPEN = 0;
 
-        if (gp.x)
-            claw.setPower(1);
-        else if (gp.y)
-            claw.setPower(-1);
+        if (gp.left_trigger > 0.1)
+            claw.setPower(-gp.left_trigger);
+        else if (gp.right_trigger > 0.1)
+            claw.setPower(gp.right_trigger);
         else
             claw.setPower(0);
 

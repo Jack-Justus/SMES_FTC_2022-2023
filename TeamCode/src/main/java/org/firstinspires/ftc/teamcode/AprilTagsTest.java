@@ -101,101 +101,98 @@ public class AprilTagsTest extends LinearOpMode {
 
         initializeHardware();
 
-        //put code up until it detects the tag here
+        while (opModeIsActive()) {
+
+            //TODO: put roadrunner stuff here up until it detects the april tag here, ie going forward and dropping cone on pole
 
 
-        //detection stuff happens, skip to line 186
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "wbcam"), cameraMonitorViewId);
-        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+            //detection stuff happens, skip to line 186
+            int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+            camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "wbcam"), cameraMonitorViewId);
+            aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
 
-        camera.setPipeline(aprilTagDetectionPipeline);
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-            @Override
-            public void onOpened() {
-                camera.startStreaming(1920,1080, OpenCvCameraRotation.UPRIGHT);
-            }
+            camera.setPipeline(aprilTagDetectionPipeline);
+            camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+                @Override
+                public void onOpened() {
+                    camera.startStreaming(1920, 1080, OpenCvCameraRotation.UPRIGHT);
+                }
 
-            @Override
-            public void onError(int errorCode) {
+                @Override
+                public void onError(int errorCode) {
 
-            }
-        });
+                }
+            });
 
-        telemetry.setMsTransmissionInterval(50);
+            telemetry.setMsTransmissionInterval(50);
 
-        while (!isStarted() && !isStopRequested()) {
-            ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+            while (!isStarted() && !isStopRequested()) {
+                ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
 
-            if(currentDetections.size() != 0) {
-                boolean tagFound = false;
+                if (currentDetections.size() != 0) {
+                    boolean tagFound = false;
 
-                for(AprilTagDetection tag : currentDetections) {
-                    if(tag.id == PARK_LEFT || tag.id == PARK_MIDDLE || tag.id == PARK_RIGHT) {
-                        tagOfInterest = tag;
-                        tagFound = true;
-                        break;
+                    for (AprilTagDetection tag : currentDetections) {
+                        if (tag.id == PARK_LEFT || tag.id == PARK_MIDDLE || tag.id == PARK_RIGHT) {
+                            tagOfInterest = tag;
+                            tagFound = true;
+                            break;
+                        }
                     }
-                }
 
-                if(tagFound) {
-                    telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
-                    tagToTelemetry(tagOfInterest);
-                }
-                else {
-                    telemetry.addLine("Don't see any parking tags");
-
-                    if(tagOfInterest == null) {
+                    if (tagFound) {
+                        telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
+                        tagToTelemetry(tagOfInterest);
+                    } else {
                         telemetry.addLine("Don't see any parking tags");
+
+                        if (tagOfInterest == null) {
+                            telemetry.addLine("Don't see any parking tags");
+                        } else {
+                            telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
+                            tagToTelemetry(tagOfInterest);
+                        }
                     }
-                    else {
+
+                } else {
+                    telemetry.addLine("Don't see tags");
+
+                    if (tagOfInterest == null) {
+                        telemetry.addLine("tags not seen");
+                    } else {
                         telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
                         tagToTelemetry(tagOfInterest);
                     }
                 }
-
+                telemetry.update();
+                sleep(20);
             }
-            else {
-                telemetry.addLine("Don't see tags");
 
-                if(tagOfInterest == null) {
-                    telemetry.addLine("tags not seen");
-                }
-                else {
-                    telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
-                    tagToTelemetry(tagOfInterest);
-                }
+            /* Update the telemetry */
+            if (tagOfInterest != null) {
+                telemetry.addLine("Tag snapshot:\n");
+                tagToTelemetry(tagOfInterest);
+                telemetry.update();
+            } else {
+                telemetry.addLine("No tag snapshot available, it was never sighted during the init loop :(");
+                telemetry.update();
             }
-            telemetry.update();
-            sleep(20);
-        }
 
-        /* Update the telemetry */
-        if(tagOfInterest != null) {
-            telemetry.addLine("Tag snapshot:\n");
-            tagToTelemetry(tagOfInterest);
-            telemetry.update();
-        }
-        else {
-            telemetry.addLine("No tag snapshot available, it was never sighted during the init loop :(");
-            telemetry.update();
-        }
-
-        //this part will actually park for us
-        //you can ignore everything above this if you want
-        if (tagOfInterest.id == PARK_LEFT) {
-            //park in the left square
-        }
-        if (tagOfInterest.id == PARK_MIDDLE || tagOfInterest == null) {
-            //park in the middle square
-        }
-        if (tagOfInterest.id == PARK_RIGHT) {
-            //park in the right square
-        }
+            //this part will actually park for us
+            //you can ignore everything above this if you want
+            if (tagOfInterest.id == PARK_LEFT) {
+                //TODO: code for parking in the left square
+            }
+            if (tagOfInterest.id == PARK_MIDDLE || tagOfInterest == null) {
+                //TODO: code for parking in the middle square
+            }
+            if (tagOfInterest.id == PARK_RIGHT) {
+                //TODO: code for parking in the right square
+            }
 
 
-        /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
-        while (opModeIsActive()) {sleep(20);}
+            /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
+        }
     }
 
     void tagToTelemetry(AprilTagDetection detection)

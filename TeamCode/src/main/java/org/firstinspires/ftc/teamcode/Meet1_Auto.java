@@ -36,7 +36,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -57,36 +58,26 @@ import com.qualcomm.robotcore.util.Range;
 @Autonomous
 public class Meet1_Auto extends LinearOpMode {
 
-    // HEY 500 IS A DUMMY NUMMY. CHANGE IT.
-    // ALL SLEEP/TIME VALUES ALSO HOLD DUMMY NUMMIES.
-    final int STOP_DIST_TICKS = 500;
-    final int MAX_SLIDE_TICKS = 500;
-    final int BACK_UP_TICKS = 250;
-
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
     // Left and Right Drive Motor Objects
-    private DcMotor rightFrontDrive;
-    private DcMotor rightBackDrive;
-    private DcMotor leftFrontDrive;
-    private DcMotor leftBackDrive;
+    private DcMotor rightFrontDrive = null;
+    private DcMotor rightBackDrive = null;
+    private DcMotor leftFrontDrive = null;
+    private DcMotor leftBackDrive = null;
 
     //Slide and Claw Objects
-    private DcMotorEx linearSlide;
-    private Servo claw;
+    private DcMotor vertLinearSlide = null;
+    private CRServo claw = null;
 
-    //encoder/odometry wheel (plugged into an empty motor encoder port)
-    private DcMotor encoder;
+    private boolean upperBoundHit;
 
-    private boolean slowModeActive = false;
+    //encoder
+    StandardTrackingWheelLocalizer encoders;
 
     @Override
     public void runOpMode() {
-
-        // HEADS UP
-        // THE MOTOR NAMES REFER TO THE ROBOT FROM BEHIND
-        // FOR EXAMPLE - THE FRONT LEFT MOTOR IS ACTUALLY CALLED THE BACK RIGHT MOTOR IN CODE
 
         // Method to assign and initialize the hardware
         initializeHardware();
@@ -99,61 +90,66 @@ public class Meet1_Auto extends LinearOpMode {
         runtime.reset();
 
         while (opModeIsActive()) {
-            //close claw to tighten around pre-load cone
-            claw.setPosition(1);
-            //give the claw closing time before jerking forward
-            sleep(100);
-            leftFrontDrive.setPower(1);
-            leftBackDrive.setPower(1);
-            rightBackDrive.setPower(1);
-            rightFrontDrive.setPower(1);
-            // once this loop completes, the slide should be at the top
-            // (yes, the cone is dangling in the air)
-            // yes, it has a risk of falling
-            // however, our lack of encoder/time/autonmous in general accuracy,
-            // the less driving adjustments we have to make the better
-            while (linearSlide.getCurrentPosition() <= MAX_SLIDE_TICKS) {
-                linearSlide.setPower(-1);
+
+            setMotorsBreakMode();
+
+            switch (checkConeState()) {
+
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+                default:
+                    // TODO: Thoughts on what we should do if the camera can't see anything?
+
+
+                    break;
+
+
             }
-            // COMMENT OUT NOT-USED OPTIONS
-            //the time to be driving forward if not using encoders:
-            sleep(500);
-            // if we are using encoders:
-            if (STOP_DIST_TICKS >= encoder.getCurrentPosition()) {
-                leftFrontDrive.setPower(0);
-                leftBackDrive.setPower(0);
-                rightBackDrive.setPower(0);
-                rightFrontDrive.setPower(0);
-                // resetting to 0 so that we can back up
-                encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            }
-            // drop the cone
-            claw.setPosition(0.7);
-            // back-up
-            leftFrontDrive.setPower(-1);
-            leftBackDrive.setPower(-1);
-            rightBackDrive.setPower(-1);
-            rightFrontDrive.setPower(-1);
-            // TIME
-            sleep(500);
-            // OR TICKS
-            if (BACK_UP_TICKS >= encoder.getCurrentPosition()) {
-                leftFrontDrive.setPower(0);
-                leftBackDrive.setPower(0);
-                rightBackDrive.setPower(0);
-                rightFrontDrive.setPower(0);
-                // resetting to 0 so that we can back up
-                encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            }
-            //put the slide down after backing up
-            while (linearSlide.getCurrentPosition() <= MAX_SLIDE_TICKS) {
-                linearSlide.setPower(1);
-            }
+
 
         }
     }
 
+    private int checkConeState() {
+        // Andrew this function is for your computer vision
+
+        return 0;
+    }
+
+    private boolean raiseLift() {
+
+        final int MAX_TICKS = 3250;
+
+        // Going up smoothly
+
+        // If the linear slide has hit the top then the upperBoundHit becomes true
+        // We can only move the linear slide up if upperBoundHit is false
+        // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
+        if (vertLinearSlide.getCurrentPosition() >= MAX_TICKS)
+            upperBoundHit = true;
+        else if (vertLinearSlide.getCurrentPosition() < MAX_TICKS - 100)
+            upperBoundHit = false;
+
+        // If the current position is valid, we move the motor upwards
+        // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
+        if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS - 150) && (!upperBoundHit))
+            vertLinearSlide.setPower(1);
+        else if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS && (!upperBoundHit)))
+            vertLinearSlide.setPower(0.4);
+        else if (vertLinearSlide.getCurrentPosition() > 1000)
+            // To prevent downward drift
+            vertLinearSlide.setPower(0.3);
+
+        // Returns if the lift is at the top
+        return upperBoundHit;
+    }
+
     private void initializeHardware() {
+
 
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
@@ -162,11 +158,46 @@ public class Meet1_Auto extends LinearOpMode {
         leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
-        linearSlide = hardwareMap.get(DcMotorEx.class, "slide");
-        claw = hardwareMap.get(Servo.class, "claw");
-        encoder = hardwareMap.get(DcMotor.class, "encoder");
+        vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
+//        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
+        claw = hardwareMap.get(CRServo.class, "claw");
 
+        // init slides
+        vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        vertLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        vertLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+//        horLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        horLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        horLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+        // Setting the motor encoder position to zero
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Ensuring the motors get the instructions
+        sleep(100);
+
+        // This makes sure the motors are moving at the same speed
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // Setting up the encoders
+//        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
+//        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
+//        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
+
+        // Encoders
+        encoders = new StandardTrackingWheelLocalizer(hardwareMap);
+
+        setMotorsBreakMode();
     }
+
 
     public void setMotorsBreakMode() {
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -183,3 +214,56 @@ public class Meet1_Auto extends LinearOpMode {
     }
 
 }
+
+// Old stuff
+
+//            //close claw to tighten around pre-load cone
+//            claw.setPosition(1);
+//            //give the claw closing time before jerking forward
+//            sleep(100);
+//            leftFrontDrive.setPower(1);
+//            leftBackDrive.setPower(1);
+//            rightBackDrive.setPower(1);
+//            rightFrontDrive.setPower(1);
+//            // once this loop completes, the slide should be at the top
+//            // (yes, the cone is dangling in the air)
+//            // yes, it has a risk of falling
+//            // however, our lack of encoder/time/autonmous in general accuracy,
+//            // the less driving adjustments we have to make the better
+//            while (linearSlide.getCurrentPosition() <= MAX_SLIDE_TICKS) {
+//                linearSlide.setPower(-1);
+//            }
+//            // COMMENT OUT NOT-USED OPTIONS
+//            //the time to be driving forward if not using encoders:
+//            sleep(500);
+//            // if we are using encoders:
+//            if (STOP_DIST_TICKS >= encoder.getCurrentPosition()) {
+//                leftFrontDrive.setPower(0);
+//                leftBackDrive.setPower(0);
+//                rightBackDrive.setPower(0);
+//                rightFrontDrive.setPower(0);
+//                // resetting to 0 so that we can back up
+//                encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            }
+//            // drop the cone
+//            claw.setPosition(0.7);
+//            // back-up
+//            leftFrontDrive.setPower(-1);
+//            leftBackDrive.setPower(-1);
+//            rightBackDrive.setPower(-1);
+//            rightFrontDrive.setPower(-1);
+//            // TIME
+//            sleep(500);
+//            // OR TICKS
+//            if (BACK_UP_TICKS >= encoder.getCurrentPosition()) {
+//                leftFrontDrive.setPower(0);
+//                leftBackDrive.setPower(0);
+//                rightBackDrive.setPower(0);
+//                rightFrontDrive.setPower(0);
+//                // resetting to 0 so that we can back up
+//                encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            }
+//            //put the slide down after backing up
+//            while (linearSlide.getCurrentPosition() <= MAX_SLIDE_TICKS) {
+//                linearSlide.setPower(1);
+//            }

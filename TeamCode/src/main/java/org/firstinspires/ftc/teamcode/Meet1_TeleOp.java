@@ -278,7 +278,7 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     }
 
-    private void initializeHardware() {
+    public void initializeHardware() {
 
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration

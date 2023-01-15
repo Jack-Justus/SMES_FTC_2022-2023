@@ -29,12 +29,13 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-
+@Disabled
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Encoder Linear Slide Test", group = "Linear Opmode")
 public class EncLinearSlideTest extends LinearOpMode {
 

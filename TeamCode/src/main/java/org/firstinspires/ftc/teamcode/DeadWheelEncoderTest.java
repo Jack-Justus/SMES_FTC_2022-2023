@@ -29,9 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -120,139 +118,97 @@ public class DeadWheelEncoderTest extends LinearOpMode {
 
             // The Letter buttons override the rest of this function
             if (gamepad1.y)
-                moveForward(0);
+                move(10, 0);
             else if (gamepad1.a)
-                moveBack(0);
+                move(10, 2);
             if (gamepad1.x)
-                moveLeft(0);
+                move(10, 3);
             else if (gamepad1.b)
-                moveRight(0);
+                move(10, 1);
+            else {
 
-            // The Letter buttons override the rest of this function
-            if (gamepad2.y)
-                moveForward(0);
-            else if (gamepad2.a)
-                moveBack(0);
-            if (gamepad2.x)
-                moveLeft(0);
-            else if (gamepad2.b)
-                moveRight(0);
+                x = -gamepad1.left_stick_x;
+                y = gamepad1.left_stick_y;
 
+                rot = -gamepad1.right_stick_x;
 
-            x = -gamepad1.left_stick_x;
-            y = gamepad1.left_stick_y;
+                // Range.clip(value, -1.0, 1.0);
 
-            rot = -gamepad1.right_stick_x;
+                // Drive Code
+                lfp = Range.clip(x + y, -1.0, 1.0);
+                lbp = Range.clip(y - x, -1.0, 1.0);
 
-            // Range.clip(value, -1.0, 1.0);
+                rfp = Range.clip(y - x, -1.0, 1.0);
+                rbp = Range.clip(x + y, -1.0, 1.0);
 
-            // Drive Code
-            lfp = Range.clip(x + y, -1.0, 1.0);
-            lbp = Range.clip(y - x, -1.0, 1.0);
+                // Fast rotation
+                if (gamepad1.right_stick_button)
+                    rotSpeed = 1;
+                else
+                    rotSpeed = 2;
 
-            rfp = Range.clip(y - x, -1.0, 1.0);
-            rbp = Range.clip(x + y, -1.0, 1.0);
+                // Slow mode
+                if (gamepad1.right_bumper)
+                    slowModeActive = true;
+                else
+                    slowModeActive = false;
 
-            // Fast rotation
-            if (gamepad1.right_stick_button)
-                rotSpeed = 1;
-            else
-                rotSpeed = 2;
+                if (slowModeActive) {
+                    speedModifier = .5;
+                    setMotorsBreakMode();
+                } else {
+                    speedModifier = 1;
+                    setMotorsFloatMode();
+                }
 
-            // Slow mode
-            if (gamepad1.right_bumper)
-                slowModeActive = true;
-            else
-                slowModeActive = false;
+                // Rotational offset code factoring in precalculated drive code
+                lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
+                lbp = Range.clip(lbp - rot / rotSpeed, -1.0, 1.0);
 
-            if (slowModeActive) {
-                speedModifier = .5;
-                setMotorsBreakMode();
-            } else {
-                speedModifier = 1;
-                setMotorsFloatMode();
+                rfp = Range.clip(rfp + rot / rotSpeed, -1.0, 1.0);
+                rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
+
+                // Send calculated power to wheels
+                rightBackDrive.setPower((-rbp) * speedModifier);
+                rightFrontDrive.setPower((rfp) * speedModifier);
+                leftFrontDrive.setPower((-lfp) * speedModifier);
+                leftBackDrive.setPower((-lbp) * speedModifier);
+
+                telemetry.addData("Motors", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
             }
 
-            // Rotational offset code factoring in precalculated drive code
-            lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
-            lbp = Range.clip(lbp - rot / rotSpeed, -1.0, 1.0);
 
-            rfp = Range.clip(rfp + rot / rotSpeed, -1.0, 1.0);
-            rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
+            updateEncoderVars();
 
-            // Send calculated power to wheels
-            rightBackDrive.setPower((-rbp) * speedModifier);
-            rightFrontDrive.setPower((rfp) * speedModifier);
-            leftFrontDrive.setPower((-lfp) * speedModifier);
-            leftBackDrive.setPower((-lbp) * speedModifier);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
-
-            rfEncoderPosition = rightFrontDrive.getCurrentPosition();
-            rbEncoderPosition = rightBackDrive.getCurrentPosition();
-            lfEncoderPosition = leftFrontDrive.getCurrentPosition();
-            lbEncoderPosition = leftBackDrive.getCurrentPosition();
-
-            leftEncoderPosition = leftEncoder.getCurrentPosition();
-            rightEncoderPosition = rightEncoder.getCurrentPosition();
-            backEncoderPosition = backEncoder.getCurrentPosition();
-
-
-//            telemetry.addData("Encoders", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfEncoderPosition, rbEncoderPosition, lbEncoderPosition, rfEncoderPosition);
-
             telemetry.addData("Encoders", "leftEncoder (%.2f), rightEncoder (%.2f), backEncoder (%.2f)", leftEncoderPosition, rightEncoderPosition, backEncoderPosition);
-
             telemetry.addData("Encoder Distance", "leftEncoder (%.2f), rightEncoder (%.2f), backEncoder (%.2f)", encoderTicksToInches(leftEncoderPosition), encoderTicksToInches(rightEncoderPosition), encoderTicksToInches(backEncoderPosition));
-
-
             telemetry.update();
         }
     }
 
-    private void initializeHardware() {
+    private void updateEncoderVars() {
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
-        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
-        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+        rfEncoderPosition = rightFrontDrive.getCurrentPosition();
+        rbEncoderPosition = rightBackDrive.getCurrentPosition();
+        lfEncoderPosition = leftFrontDrive.getCurrentPosition();
+        lbEncoderPosition = leftBackDrive.getCurrentPosition();
 
-        leftEncoder = hardwareMap.get(DcMotor.class, "leftE");
-        rightEncoder = hardwareMap.get(DcMotor.class, "rightE");
-        backEncoder = hardwareMap.get(DcMotor.class, "midE");
-//        armNameHere = hardwareMap.get(CRServo.class, "clawServo");
-
-        // Setting the motor encoder position to zero
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-
-        // Ensuring the motors get the instructions
-        sleep(100);
-
-        // This makes sure the motors are moving at the same speed
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        leftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftEncoderPosition = leftEncoder.getCurrentPosition();
+        rightEncoderPosition = rightEncoder.getCurrentPosition();
+        backEncoderPosition = backEncoder.getCurrentPosition();
     }
+
+
 
     public static double encoderTicksToInches(double ticks) {
         return DEADWHEEL_DIAM_IN * Math.PI * ticks / TICKS_PER_REV_DEAD;
+    }
+
+    public static double encoderInchesToTicks(double inches) {
+        return (inches * TICKS_PER_REV_DEAD) / (DEADWHEEL_DIAM_IN * Math.PI);
     }
 
     // These functions are to prototype and test autonomous
@@ -294,66 +250,34 @@ public class DeadWheelEncoderTest extends LinearOpMode {
                 break;
         }
 
-        leftFrontDrive.setPower(Range.clip(x + y, -1.0, 1.0));
-        leftBackDrive.setPower(Range.clip(y - x, -1.0, 1.0));
+        if (opModeIsActive()) {
+            leftFrontDrive.setPower(Range.clip(x + y, -1.0, 1.0));
+            leftBackDrive.setPower(Range.clip(y - x, -1.0, 1.0));
 
-        rightFrontDrive.setPower(-Range.clip(y - x, -1.0, 1.0));
-        rightBackDrive.setPower(Range.clip(x + y, -1.0, 1.0));
-
+            rightFrontDrive.setPower(-Range.clip(y - x, -1.0, 1.0));
+            rightBackDrive.setPower(Range.clip(x + y, -1.0, 1.0));
+        }
     }
 
-    // These four functions can probably be compressed so if u find a way to do that be my guest
+    public void move(double inches, int dir) {
 
-    public void moveForward(int ticks) {
+        /* DIR KEY
+        0 = forward
+        1 = right
+        2 = back
+        3 = left
+         */
 
-        if (ticks == 0)
-            ticks = DEFAULT_MOVE_TICKS;
+        // We measure encoder distance based on the average of the left and right encoder
+        double encoderPos = (leftEncoderPosition + rightEncoderPosition) / 2;
+        double ticks = encoderInchesToTicks(inches);
 
-        double baselineL = Math.abs(leftFrontDrive.getCurrentPosition());
-        double baselineR = Math.abs(rightFrontDrive.getCurrentPosition());
+        // Moving forward if we are not at the destination
+        if (encoderPos < ticks)
+            move(dir);
+        else
+            idle();
 
-        // Running until the amount of ticks in either wheel has elapsed
-        while (Math.abs(leftFrontDrive.getCurrentPosition()) < (baselineL + ticks) || Math.abs(rightFrontDrive.getCurrentPosition()) < (baselineR + ticks))
-            if (opModeIsActive())
-                // Its reversed
-                move(2);
-
-    }
-
-    public void moveRight(int ticks) {
-
-        if (ticks == 0)
-            ticks = DEFAULT_MOVE_TICKS;
-
-        double baseline = runtime.milliseconds();
-
-        // Running until the amount of time has elapsed
-        while (runtime.milliseconds() < baseline + (ticks * 1000))
-            move(1);
-    }
-
-    public void moveBack(int ticks) {
-
-        if (ticks == 0)
-            ticks = DEFAULT_MOVE_TICKS;
-
-        double baseline = runtime.milliseconds();
-
-        // Running until the amount of time has elapsed
-        while (runtime.milliseconds() < baseline + (ticks * 1000))
-            move(2);
-    }
-
-    public void moveLeft(int ticks) {
-
-        if (ticks == 0)
-            ticks = DEFAULT_MOVE_TICKS;
-
-        double baseline = runtime.milliseconds();
-
-        // Running until the amount of time has elapsed
-        while (runtime.milliseconds() < baseline + (ticks * 1000))
-            move(3);
     }
 
 
@@ -369,6 +293,46 @@ public class DeadWheelEncoderTest extends LinearOpMode {
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+    }
+
+    private void initializeHardware() {
+
+        // Initialize the hardware variables. Note that the strings used here as parameters
+        // to 'get' must correspond to the names assigned during the robot configuration
+        // step (using the FTC Robot Controller app on the phone).
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
+        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
+        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+
+        leftEncoder = hardwareMap.get(DcMotor.class, "leftE");
+        rightEncoder = hardwareMap.get(DcMotor.class, "rightE");
+        backEncoder = hardwareMap.get(DcMotor.class, "midE");
+//        armNameHere = hardwareMap.get(CRServo.class, "clawServo");
+
+        // Setting the motor encoder position to zero
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+
+        // Ensuring the motors get the instructions
+        sleep(100);
+
+        // This makes sure the motors are moving at the same speed
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        leftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
 

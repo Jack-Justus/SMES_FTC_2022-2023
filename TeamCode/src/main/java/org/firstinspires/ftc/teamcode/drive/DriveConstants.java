@@ -20,7 +20,11 @@ public class DriveConstants {
     /*
      * These are motor constants that should be listed online for your motors.
      */
+
+    //https://www.gobilda.com/content/spec_sheets/5203-2402-0019_spec_sheet.pdf
     public static final double TICKS_PER_REV = 537.7;
+    //CHECK THIS - could be 28?
+
     public static final double MAX_RPM = 312;
 
     /*
@@ -43,6 +47,8 @@ public class DriveConstants {
      * angular distances although most angular parameters are wrapped in Math.toRadians() for
      * convenience. Make sure to exclude any gear ratio included in MOTOR_CONFIG from GEAR_RATIO.
      */
+
+    //96mm diam --> 48 radius
     public static double WHEEL_RADIUS = 1.89; // in
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (motor) speed
     public static double TRACK_WIDTH = 15.73; // in

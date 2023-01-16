@@ -50,8 +50,8 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Mech Drive Mode", group = "Linear Opmode")
-public class MechanumDriveMode extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "DeadWheelEncoderTest", group = "Linear Opmode")
+public class DeadWheelEncoderTest extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -61,6 +61,13 @@ public class MechanumDriveMode extends LinearOpMode {
     private DcMotor rightBackDrive = null;
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
+
+    private DcMotor leftEncoder = null;
+    private DcMotor rightEncoder = null;
+    private DcMotor backEncoder = null;
+    float leftEncoderPosition;
+    float rightEncoderPosition;
+    float backEncoderPosition;
 //    private CRServo armNameHere;
 
     float rfEncoderPosition;
@@ -71,6 +78,12 @@ public class MechanumDriveMode extends LinearOpMode {
     private boolean slowModeActive = false;
 
     private final int DEFAULT_MOVE_TICKS = 500;
+
+    public static final double TICKS_PER_REV_DEAD = 8192;
+
+    public static double DEADWHEEL_DIAM_MM = 35;
+    public static double DEADWHEEL_DIAM_IN = DEADWHEEL_DIAM_MM * 0.0393701;
+
 
     @Override
     public void runOpMode() {
@@ -182,7 +195,18 @@ public class MechanumDriveMode extends LinearOpMode {
             lfEncoderPosition = leftFrontDrive.getCurrentPosition();
             lbEncoderPosition = leftBackDrive.getCurrentPosition();
 
-            telemetry.addData("Encoders", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfEncoderPosition, rbEncoderPosition, lbEncoderPosition, rfEncoderPosition);
+            leftEncoderPosition = leftEncoder.getCurrentPosition();
+            rightEncoderPosition = rightEncoder.getCurrentPosition();
+            backEncoderPosition = backEncoder.getCurrentPosition();
+
+
+//            telemetry.addData("Encoders", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfEncoderPosition, rbEncoderPosition, lbEncoderPosition, rfEncoderPosition);
+
+            telemetry.addData("Encoders", "leftEncoder (%.2f), rightEncoder (%.2f), backEncoder (%.2f)", leftEncoderPosition, rightEncoderPosition, backEncoderPosition);
+
+            telemetry.addData("Encoder Distance", "leftEncoder (%.2f), rightEncoder (%.2f), backEncoder (%.2f)", encoderTicksToInches(leftEncoderPosition), encoderTicksToInches(rightEncoderPosition), encoderTicksToInches(backEncoderPosition));
+
+
             telemetry.update();
         }
     }
@@ -196,6 +220,10 @@ public class MechanumDriveMode extends LinearOpMode {
         leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+
+        leftEncoder = hardwareMap.get(DcMotor.class, "leftE");
+        rightEncoder = hardwareMap.get(DcMotor.class, "rightE");
+        backEncoder = hardwareMap.get(DcMotor.class, "midE");
 //        armNameHere = hardwareMap.get(CRServo.class, "clawServo");
 
         // Setting the motor encoder position to zero
@@ -203,6 +231,11 @@ public class MechanumDriveMode extends LinearOpMode {
         leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
 
         // Ensuring the motors get the instructions
         sleep(100);
@@ -213,7 +246,13 @@ public class MechanumDriveMode extends LinearOpMode {
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        leftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
 
+    public static double encoderTicksToInches(double ticks) {
+        return DEADWHEEL_DIAM_IN * Math.PI * ticks / TICKS_PER_REV_DEAD;
     }
 
     // These functions are to prototype and test autonomous
@@ -316,20 +355,6 @@ public class MechanumDriveMode extends LinearOpMode {
         while (runtime.milliseconds() < baseline + (ticks * 1000))
             move(3);
     }
-
-//    private void controlArm() {
-//
-//        // Closing and opening Arm Servo
-//
-//        // Taking inputs and setting power
-//        if (gamepad2.b)
-//            armNameHere.setPower(1);
-//        else if (gamepad2.a)
-//            armNameHere.setPower(-1);
-//        else
-//            armNameHere.setPower(0);
-//
-//    }
 
 
     public void setMotorsBreakMode() {

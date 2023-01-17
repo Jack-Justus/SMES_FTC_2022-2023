@@ -55,10 +55,18 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
 //        frontEncoder.setDirection(Encoder.Direction.REVERSE);
         rightEncoder.setDirection(Encoder.Direction.REVERSE);
         leftEncoder.setDirection(Encoder.Direction.REVERSE);
+
+        getEncoderData();
     }
 
     public static double encoderTicksToInches(double ticks) {
         return WHEEL_RADIUS * 2 * Math.PI * GEAR_RATIO * ticks / TICKS_PER_REV;
+    }
+
+    public  void getEncoderData() {
+        telemetry.addData("left enc: ", leftEncoder.getCurrentPosition());
+        telemetry.addData("right enc: ",  rightEncoder.getCurrentPosition());
+        telemetry.addData("forward enc: ",  frontEncoder.getCurrentPosition());
     }
 
     @NonNull

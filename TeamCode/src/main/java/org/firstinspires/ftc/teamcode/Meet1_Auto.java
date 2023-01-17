@@ -137,7 +137,7 @@ public class Meet1_Auto extends LinearOpMode {
         telemetry.update();
 
         // First Move
-        final int DISTANCE = 10;
+        final int DISTANCE = 10; //in
         Trajectory move1 = drive.trajectoryBuilder(new Pose2d())
                 .forward(DISTANCE)
                 .build();

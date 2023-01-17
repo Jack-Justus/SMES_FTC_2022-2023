@@ -180,7 +180,7 @@ public class DeadWheelEncoderTest extends LinearOpMode {
             double lEncoder = encoders.getWheelPositions().get(0);
             double rEncoder = encoders.getWheelPositions().get(1);
             double fEncoder = encoders.getWheelPositions().get(2);
-            telemetry.addData("Encoders", "leftEncoder (%.2f), rightEncoder (%.2f), frontEncoder (%.2f)", lEncoder, rEncoder, fEncoder);
+            telemetry.addData("Encoder Distance", "leftEncoder (%.2f), rightEncoder (%.2f), frontEncoder (%.2f)", lEncoder, rEncoder, fEncoder);
             telemetry.addData("Encoder Distance", "leftEncoder (%.2f), rightEncoder (%.2f), frontEncoder (%.2f)", encoderTicksToInches(lEncoder), encoderTicksToInches(rEncoder), encoderTicksToInches(fEncoder));
             telemetry.update();
         }

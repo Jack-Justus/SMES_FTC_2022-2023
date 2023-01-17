@@ -32,7 +32,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -238,35 +237,6 @@ public class Meet1_TeleOp extends LinearOpMode {
         telemetry.addData("Front Encoder", encoders.getWheelPositions().get(2));
         telemetry.update();
 
-
-    }
-
-    public void odometry() {
-
-        // Updating these vars
-//        oldRightPosition = currentRightPosition;
-//        oldLeftPosition = currentLeftPositions;
-//        oldAuxPosition = currentAuxPosition;
-
-        // Updating the current encoders pos
-//        currentRightPosition = -encoderRight.getCurrentPosition();
-//        currentLeftPositions = -encoderLeft.getCurrentPosition();
-//        currentAuxPosition = encoderAux.getCurrentPosition();
-
-//        int dn1 = currentLeftPositions - oldLeftPosition;
-//        int dn2 = currentRightPosition - oldRightPosition;
-//        int dn3 = currentAuxPosition - oldAuxPosition;
-
-        // The robot has moved and turned a tiny bit between two measurements:
-//        double dtheta = cm_per_tick * (dn2 - dn1) / L;
-//        double dx = cm_per_tick * (dn1 + dn2) / 2.0;
-//        double dy = cm_per_tick * (dn3 - (dn2 - dn1) * B / L);
-//
-//        // Small movement of the robot gets added to the field coordinate system:
-//        double theta = pos.h + (dtheta / 2.0);
-//        pos.x += dx * Math.cos(theta) - dy * Math.sin(theta);
-//        pos.y += dx * Math.sin(theta) + dy * Math.cos(theta);
-//        pos.h += dtheta;
 
     }
 

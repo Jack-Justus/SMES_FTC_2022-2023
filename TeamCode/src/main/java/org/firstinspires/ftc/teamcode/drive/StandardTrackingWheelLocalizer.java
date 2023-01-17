@@ -31,7 +31,7 @@ import java.util.List;
 @Config
 public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer {
     public static double TICKS_PER_REV =  8192;
-    public static double WHEEL_RADIUS = 0.689; // in, can be 1.89
+    public static double WHEEL_RADIUS = 1.89; // in
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (encoder) speed
 
     public static double LATERAL_DISTANCE = 16.5; // in; distance between the left and right wheels
@@ -46,28 +46,21 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
                 new Pose2d(FORWARD_OFFSET, 0, Math.toRadians(90)) // front
         ));
 
-        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "leftE"));
-        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rightE"));
-        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "frontE"));
+        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "lf"));
+        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rf"));
+        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rb"));
 
         // TODO: reverse any encoders using Encoder.setDirection(Encoder.Direction.REVERSE)
 
 //        frontEncoder.setDirection(Encoder.Direction.REVERSE);
         rightEncoder.setDirection(Encoder.Direction.REVERSE);
         leftEncoder.setDirection(Encoder.Direction.REVERSE);
-
-        getEncoderData();
     }
 
     public static double encoderTicksToInches(double ticks) {
         return WHEEL_RADIUS * 2 * Math.PI * GEAR_RATIO * ticks / TICKS_PER_REV;
     }
 
-    public  void getEncoderData() {
-        telemetry.addData("left enc: ", leftEncoder.getCurrentPosition());
-        telemetry.addData("right enc: ",  rightEncoder.getCurrentPosition());
-        telemetry.addData("forward enc: ",  frontEncoder.getCurrentPosition());
-    }
 
     @NonNull
     @Override

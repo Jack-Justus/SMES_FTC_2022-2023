@@ -32,15 +32,13 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
-import org.firstinspires.ftc.teamcode.util.Encoder;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -67,10 +65,11 @@ public class Meet1_TeleOp extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     // Left and Right Drive Motor Objects
-    private DcMotor rightFrontDrive = null;
-    private DcMotor rightBackDrive = null;
-    private DcMotor leftFrontDrive = null;
-    private DcMotor leftBackDrive = null;
+    SampleMecanumDrive drive = null;
+//    private DcMotor rightFrontDrive = null;
+//    private DcMotor rightBackDrive = null;
+//    private DcMotor leftFrontDrive = null;
+//    private DcMotor leftBackDrive = null;
 
     // vert Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
@@ -93,10 +92,6 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
-        // HEADS UP
-        // THE MOTOR NAMES REFER TO THE ROBOT FROM BEHIND
-        // FOR EXAMPLE - THE FRONT LEFT MOTOR IS ACTUALLY CALLED THE BACK RIGHT MOTOR IN CODE
 
         // Method to assign and initialize the hardware
         initializeHardware();
@@ -190,9 +185,6 @@ public class Meet1_TeleOp extends LinearOpMode {
         x = -gp.left_stick_x;
         y = gp.left_stick_y;
 
-//        x = (float) ((runtime.milliseconds() % 5000) / 5000);
-//        y = (float) (((runtime.milliseconds() + 2500) % 5000) / 5000);
-
         rot = -gp.right_stick_x;
 
         double maxSpeed = 0.7;
@@ -211,10 +203,7 @@ public class Meet1_TeleOp extends LinearOpMode {
             rotSpeed = 2;
 
         // Slow mode
-        if (gp.right_bumper)
-            slowModeActive = true;
-        else
-            slowModeActive = false;
+        slowModeActive = gp.right_bumper;
 
         if (slowModeActive) {
             speedModifier = .4;
@@ -232,10 +221,12 @@ public class Meet1_TeleOp extends LinearOpMode {
         rbp = Range.clip(rbp + rot / rotSpeed, -1.0, 1.0);
 
         // Send calculated power to wheels
-        rightBackDrive.setPower((rbp) * speedModifier);
-        rightFrontDrive.setPower((rfp) * speedModifier);
-        leftFrontDrive.setPower((lfp) * speedModifier);
-        leftBackDrive.setPower((lbp) * speedModifier);
+        drive.setMotorPowers(lfp * speedModifier, lbp * speedModifier, rbp * speedModifier, rfp * speedModifier);
+//        leftFrontDrive.setPower((lfp) * speedModifier);
+//        leftBackDrive.setPower((lbp) * speedModifier);
+//        rightBackDrive.setPower((rbp) * speedModifier);
+//        rightFrontDrive.setPower((rfp) * speedModifier);
+
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -284,10 +275,11 @@ public class Meet1_TeleOp extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
-        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+//        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
+//        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
+//        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
+//        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+        drive = new SampleMecanumDrive(hardwareMap);
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
 //        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
         claw = hardwareMap.get(CRServo.class, "claw");
@@ -303,30 +295,26 @@ public class Meet1_TeleOp extends LinearOpMode {
 
 
         // Setting the motor encoder position to zero
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        drive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Ensuring the motors get the instructions
         sleep(100);
 
-        // This makes sure the motors are moving at the same speed
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // This makes sure the motors are not using encoders (we don't use them)
+        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // This is necesary
-        leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotorSimple.Direction.FORWARD);
-
-        // Setting up the encoders
-//        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
-//        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
-//        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
+//        leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+//        leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+//        rightFrontDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+//        rightBackDrive.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Encoders
         encoders = new StandardTrackingWheelLocalizer(hardwareMap);
@@ -487,17 +475,19 @@ public class Meet1_TeleOp extends LinearOpMode {
     }
 
     public void setMotorsBreakMode() {
-        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        drive.setMotorsBreakMode();
+//        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     public void setMotorsFloatMode() {
-        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        drive.setMotorsFloatMode();
+//        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+//        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+//        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+//        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
 }

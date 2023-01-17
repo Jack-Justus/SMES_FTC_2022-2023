@@ -32,6 +32,9 @@ package org.firstinspires.ftc.teamcode;
 import static org.firstinspires.ftc.teamcode.AutoData.encoderInchesToTicks;
 import static org.firstinspires.ftc.teamcode.AutoData.encoderTicksToInches;
 
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -40,6 +43,16 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 
@@ -72,10 +85,12 @@ public class Meet1_Auto extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     // Left and Right Drive Motor Objects
-    private DcMotor rightFrontDrive = null;
-    private DcMotor rightBackDrive = null;
-    private DcMotor leftFrontDrive = null;
-    private DcMotor leftBackDrive = null;
+//    private DcMotor rightFrontDrive = null;
+//    private DcMotor rightBackDrive = null;
+//    private DcMotor leftFrontDrive = null;
+//    private DcMotor leftBackDrive = null;
+
+    SampleMecanumDrive drive = null;
 
     //Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
@@ -114,12 +129,18 @@ public class Meet1_Auto extends LinearOpMode {
 
         // Method to assign and initialize the hardware
         initializeHardware();
-        setMotorsBreakMode();
+        drive.setMotorsBreakMode();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        // Wait for the game to start (driver presses PLAY)
+        // First Move
+        final int DISTANCE = 10;
+        Trajectory move1 = drive.trajectoryBuilder(new Pose2d())
+                .forward(DISTANCE)
+                .build();
+
+
         waitForStart();
         runtime.reset();
 
@@ -135,10 +156,16 @@ public class Meet1_Auto extends LinearOpMode {
 
                 case 0: {
                     // Starting by moving and raising the lift
-                    if (moveLift(1000) && move(10, 0)) {
-                        sleep(1000);
-                        autoPhase = 1;
-                    }
+//                    if (moveLift(1000) && move(10, 0)) {
+//                        sleep(1000);
+//                        autoPhase = 1;
+//                    }
+                    drive.followTrajectory(move1);
+
+                    Pose2d poseEstimate = drive.getPoseEstimate();
+                    telemetry.addData("finalX", poseEstimate.getX());
+                    telemetry.addData("finalY", poseEstimate.getY());
+                    telemetry.addData("finalHeading", poseEstimate.getHeading());
                     break;
                 }
                 case 1: {
@@ -323,11 +350,13 @@ public class Meet1_Auto extends LinearOpMode {
         }
 
         if (opModeIsActive()) {
-            leftFrontDrive.setPower(Range.clip(x + y, -1.0, 1.0));
-            leftBackDrive.setPower(Range.clip(y - x, -1.0, 1.0));
+            double lfp = (Range.clip(x + y, -1.0, 1.0));
+            double lbp = (Range.clip(y - x, -1.0, 1.0));
+            double rfp = (Range.clip(y - x, -1.0, 1.0));
+            double rbp = (Range.clip(x + y, -1.0, 1.0));
 
-            rightFrontDrive.setPower(Range.clip(y - x, -1.0, 1.0));
-            rightBackDrive.setPower(Range.clip(x + y, -1.0, 1.0));
+            drive.setMotorPowers(lfp, lbp, rfp, rbp);
+
         }
     }
 
@@ -341,14 +370,14 @@ public class Meet1_Auto extends LinearOpMode {
 
     private void initializeHardware() {
 
-
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
-        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+//        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
+//        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
+//        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
+//        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+        drive = new SampleMecanumDrive(hardwareMap);
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
 //        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
         claw = hardwareMap.get(CRServo.class, "claw");
@@ -364,38 +393,31 @@ public class Meet1_Auto extends LinearOpMode {
 
 
         // Setting the motor encoder position to zero
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        drive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Ensuring the motors get the instructions
         sleep(100);
 
-        // This makes sure the motors are moving at the same speed
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // This makes sure the motors are not using encoders (we don't use them)
+        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+//        leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+//        leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+//        rightFrontDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+//        rightBackDrive.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Encoders
         encoders = new StandardTrackingWheelLocalizer(hardwareMap);
 
-        setMotorsBreakMode();
-    }
-
-    public void setMotorsBreakMode() {
-        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    }
-
-    public void setMotorsFloatMode() {
-        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        drive.setMotorsBreakMode();
     }
 
 }

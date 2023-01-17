@@ -39,6 +39,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.openftc.apriltag.*;
+import org.openftc.easyopencv.*;
+
+import java.util.ArrayList;
+
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
  * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
@@ -76,6 +82,31 @@ public class Meet1_Auto extends LinearOpMode {
     //encoder
     StandardTrackingWheelLocalizer encoders;
 
+    //camera and CV
+    OpenCvCamera camera;
+    AprilTagDetectionPipeline aprilTagDetectionPipeline;
+
+    static final double FEET_PER_METER = 3.28084;
+
+    // Lens intrinsics
+    // UNITS ARE PIXELS
+    // NOTE: this calibration is for the C920 webcam at 800x448.
+    // You will need to do your own calibration for other configurations!
+    double fx = 578.272;
+    double fy = 578.272;
+    double cx = 402.145;
+    double cy = 221.506;
+
+    // UNITS ARE METERS
+    double tagsize = 0.166;
+
+    //tags from tag family thing
+    int PARK_LEFT = 3;
+    int PARK_MIDDLE = 15;
+    int PARK_RIGHT = 17;
+
+    AprilTagDetection tagOfInterest = null;
+
     @Override
     public void runOpMode() {
 
@@ -96,14 +127,17 @@ public class Meet1_Auto extends LinearOpMode {
             switch (checkConeState()) {
 
                 case 0:
+                    //park in leftmost square
                     break;
                 case 1:
+                    //park in middle square
                     break;
                 case 2:
+                    //park in rightmost square
                     break;
                 default:
                     // TODO: Thoughts on what we should do if the camera can't see anything?
-
+                    // we should park somewhere that'll still get us points w/o the cv if it doesn't detect
 
                     break;
 
@@ -116,6 +150,70 @@ public class Meet1_Auto extends LinearOpMode {
 
     private int checkConeState() {
         // Andrew this function is for your computer vision
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "wbcam"), cameraMonitorViewId);
+        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+
+        camera.setPipeline(aprilTagDetectionPipeline);
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+            @Override
+            public void onOpened() {
+                camera.startStreaming(1920, 1080, OpenCvCameraRotation.UPRIGHT);
+            }
+
+            @Override
+            public void onError(int errorCode) {
+                //error things?
+            }
+        });
+        telemetry.setMsTransmissionInterval(50);
+
+        while (!isStarted() && !isStopRequested()) {
+            ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+
+            if (currentDetections.size() != 0) {
+                boolean tagFound = false;
+
+                for (AprilTagDetection tag : currentDetections) {
+                    if (tag.id == PARK_LEFT || tag.id == PARK_MIDDLE || tag.id == PARK_RIGHT) {
+                        tagOfInterest = tag;
+                        tagFound = true;
+                        break;
+                    }
+                }
+
+                //will rewrite most of this later, it works for now though
+
+                if (tagFound) {
+                    telemetry.addLine("tag in sight");
+                } else {
+                    telemetry.addLine("don't see any parking tags");
+
+                    if (tagOfInterest == null) {
+                        telemetry.addLine("don't see any parking tags");
+                    }
+                }
+
+            } else {
+                telemetry.addLine("Don't see tags");
+            }
+            telemetry.update();
+            sleep(20);
+        }
+
+        //returns which spot to park based on the april tag
+        //0 - left square
+        //1 - middle square
+        //2 - right square
+        if (tagOfInterest.id == PARK_LEFT) {
+            return 0;
+        }
+        if (tagOfInterest.id == PARK_MIDDLE || tagOfInterest == null) {
+            return 1;
+        }
+        if (tagOfInterest.id == PARK_RIGHT) {
+            return 2;
+        }
 
         return 0;
     }

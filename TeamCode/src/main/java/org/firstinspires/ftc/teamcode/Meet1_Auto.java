@@ -59,6 +59,7 @@ import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.openftc.apriltag.*;
 import org.openftc.easyopencv.*;
+import org.firstinspires.ftc.teamcode.AutoData;
 
 import java.util.ArrayList;
 
@@ -91,6 +92,7 @@ public class Meet1_Auto extends LinearOpMode {
 //    private DcMotor leftBackDrive = null;
 
     SampleMecanumDrive drive = null;
+    AutoData encoderData = null;
 
     //Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
@@ -166,6 +168,7 @@ public class Meet1_Auto extends LinearOpMode {
                     telemetry.addData("finalX", poseEstimate.getX());
                     telemetry.addData("finalY", poseEstimate.getY());
                     telemetry.addData("finalHeading", poseEstimate.getHeading());
+                    //telemetry.addLine("encoder dist travelled: ");
                     break;
                 }
                 case 1: {

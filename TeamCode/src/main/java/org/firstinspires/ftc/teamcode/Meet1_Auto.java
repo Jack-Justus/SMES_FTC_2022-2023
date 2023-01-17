@@ -29,6 +29,9 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.AutoData.encoderInchesToTicks;
+import static org.firstinspires.ftc.teamcode.AutoData.encoderTicksToInches;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -36,6 +39,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 
@@ -71,7 +75,7 @@ public class Meet1_Auto extends LinearOpMode {
     private DcMotor vertLinearSlide = null;
     private CRServo claw = null;
 
-    private boolean upperBoundHit;
+    private int autoPhase = 0;
 
     //encoder
     StandardTrackingWheelLocalizer encoders;
@@ -81,6 +85,7 @@ public class Meet1_Auto extends LinearOpMode {
 
         // Method to assign and initialize the hardware
         initializeHardware();
+        setMotorsBreakMode();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -91,26 +96,42 @@ public class Meet1_Auto extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            setMotorsBreakMode();
+            /*
+            Our Autonomous is broken into phases.
+            This is so that we don't have the motors receiving contradictory commands.
+            Once one phase of instructions is complete, we will move to the next.
+             */
 
-            switch (checkConeState()) {
+            switch (autoPhase) {
 
                 case 0:
+                    // Starting by moving and raising the lift
+                    if (moveLift(1000) && move(10, 0)) {
+                        sleep(1000);
+                        autoPhase = 1;
+                    }
                     break;
+
                 case 1:
-                    break;
-                case 2:
-                    break;
-                default:
-                    // TODO: Thoughts on what we should do if the camera can't see anything?
+                    // Computer vision
+                    switch (checkConeState()) {
+
+                        case 0:
+                            break;
+                        case 1:
+                            break;
+                        case 2:
+                            break;
+                        default:
+                            // TODO: Thoughts on what we should do if the camera can't see anything?
 
 
+                            break;
+                    }
                     break;
 
 
             }
-
-
         }
     }
 
@@ -120,32 +141,107 @@ public class Meet1_Auto extends LinearOpMode {
         return 0;
     }
 
-    private boolean raiseLift() {
+    private boolean moveLift(int targetTicks) {
 
-        final int MAX_TICKS = 3250;
+        // Moving the lift to the target position
 
-        // Going up smoothly
+        // Constants
+        double liftTicks = vertLinearSlide.getCurrentPosition();
+        final double LIFT_IDLE_POWER = 0.3;
+        final double LIFT_MID_POWER = -0.3;
+        final double LIFT_MAX_POWER = 1.0;
 
-        // If the linear slide has hit the top then the upperBoundHit becomes true
-        // We can only move the linear slide up if upperBoundHit is false
-        // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
-        if (vertLinearSlide.getCurrentPosition() >= MAX_TICKS)
-            upperBoundHit = true;
-        else if (vertLinearSlide.getCurrentPosition() < MAX_TICKS - 100)
-            upperBoundHit = false;
 
-        // If the current position is valid, we move the motor upwards
-        // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
-        if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS - 150) && (!upperBoundHit))
-            vertLinearSlide.setPower(1);
-        else if ((vertLinearSlide.getCurrentPosition() < MAX_TICKS && (!upperBoundHit)))
-            vertLinearSlide.setPower(0.4);
-        else if (vertLinearSlide.getCurrentPosition() > 1000)
-            // To prevent downward drift
-            vertLinearSlide.setPower(0.3);
+        // Checking to see if the lift is at the position with a tolerance of ±50 ticks
+        if (Math.abs(liftTicks - targetTicks) < 50) {
+            vertLinearSlide.setPower(LIFT_IDLE_POWER);
+            return true;
+        }
 
-        // Returns if the lift is at the top
-        return upperBoundHit;
+
+        double distToTarget = -(liftTicks - targetTicks);
+
+        double calcPower = Range.clip(distToTarget / 1000, LIFT_MID_POWER, LIFT_MAX_POWER);
+
+        vertLinearSlide.setPower(calcPower);
+
+        return false;
+    }
+
+
+    public boolean move(double inches, int dir) {
+
+        /* DIR KEY
+        0 = forward
+        1 = right
+        2 = back
+        3 = left
+         */
+
+        // We measure encoder distance based on the average of the left and right encoder
+        double encoderPos = (encoders.getWheelPositions().get(0) + encoders.getWheelPositions().get(1)) / 2;
+        double ticks = encoderInchesToTicks(inches);
+
+        // Moving forward if we are not at the destination
+        if (encoderPos < ticks)
+            move(dir);
+        else
+            return true;
+        return false;
+    }
+
+    private void move(int dir) {
+
+        /*
+        0 = forward
+        1 = right
+        2 = back
+        3 = left
+         */
+
+        int x;
+        int y;
+
+
+        switch (dir) {
+
+            case 0:
+                y = -1;
+                x = 0;
+                break;
+            case 1:
+                y = 0;
+                x = -1;
+                break;
+            case 2:
+                y = 1;
+                x = 0;
+                break;
+            case 3:
+                y = 0;
+                x = 1;
+                break;
+            default:
+                x = 0;
+                y = 0;
+                break;
+        }
+
+        if (opModeIsActive()) {
+            leftFrontDrive.setPower(Range.clip(x + y, -1.0, 1.0));
+            leftBackDrive.setPower(Range.clip(y - x, -1.0, 1.0));
+
+            rightFrontDrive.setPower(Range.clip(y - x, -1.0, 1.0));
+            rightBackDrive.setPower(Range.clip(x + y, -1.0, 1.0));
+        }
+    }
+
+    private void closeClaw() {
+        claw.setPower(1);
+    }
+
+    private void openClaw() {
+        claw.setPower(-1);
     }
 
     private void initializeHardware() {
@@ -187,17 +283,11 @@ public class Meet1_Auto extends LinearOpMode {
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Setting up the encoders
-//        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
-//        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
-//        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
-
         // Encoders
         encoders = new StandardTrackingWheelLocalizer(hardwareMap);
 
         setMotorsBreakMode();
     }
-
 
     public void setMotorsBreakMode() {
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -267,3 +357,27 @@ public class Meet1_Auto extends LinearOpMode {
 //            while (linearSlide.getCurrentPosition() <= MAX_SLIDE_TICKS) {
 //                linearSlide.setPower(1);
 //            }
+
+//    private void raiseLift(int ticks) {
+//
+//        // Going up smoothly
+//
+//        // If the linear slide has hit the top then the upperBoundHit becomes true
+//        // We can only move the linear slide up if upperBoundHit is false
+//        // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
+//        if (vertLinearSlide.getCurrentPosition() >= ticks)
+//            upperBoundHit = true;
+//        else if (vertLinearSlide.getCurrentPosition() < ticks - 100)
+//            upperBoundHit = false;
+//
+//        // If the current position is valid, we move the motor upwards
+//        // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
+//        if ((vertLinearSlide.getCurrentPosition() < ticks - 150) && (!upperBoundHit))
+//            vertLinearSlide.setPower(1);
+//        else if ((vertLinearSlide.getCurrentPosition() < ticks && (!upperBoundHit)))
+//            vertLinearSlide.setPower(0.4);
+//        else if (vertLinearSlide.getCurrentPosition() > 100)
+//            // To prevent downward drift
+//            vertLinearSlide.setPower(0.3);
+//
+//    }

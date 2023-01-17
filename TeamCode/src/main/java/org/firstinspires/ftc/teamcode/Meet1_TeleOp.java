@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -233,8 +234,8 @@ public class Meet1_TeleOp extends LinearOpMode {
         // Send calculated power to wheels
         rightBackDrive.setPower((rbp) * speedModifier);
         rightFrontDrive.setPower((rfp) * speedModifier);
-        leftFrontDrive.setPower((-lfp) * speedModifier);
-        leftBackDrive.setPower((-lbp) * speedModifier);
+        leftFrontDrive.setPower((lfp) * speedModifier);
+        leftBackDrive.setPower((lbp) * speedModifier);
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -315,6 +316,12 @@ public class Meet1_TeleOp extends LinearOpMode {
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // This is necesary
+        leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightBackDrive.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Setting up the encoders
 //        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
@@ -477,8 +484,6 @@ public class Meet1_TeleOp extends LinearOpMode {
             claw.setPower(gp.right_trigger);
         else
             claw.setPower(0);
-
-
     }
 
     public void setMotorsBreakMode() {

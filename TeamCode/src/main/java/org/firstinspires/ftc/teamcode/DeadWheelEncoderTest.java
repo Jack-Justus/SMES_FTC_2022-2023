@@ -34,6 +34,10 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import static org.firstinspires.ftc.teamcode.AutoData.encoderTicksToInches;
+
+import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
+
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -60,13 +64,7 @@ public class DeadWheelEncoderTest extends LinearOpMode {
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
 
-    private DcMotor leftEncoder = null;
-    private DcMotor rightEncoder = null;
-    private DcMotor backEncoder = null;
-    float leftEncoderPosition;
-    float rightEncoderPosition;
-    float backEncoderPosition;
-//    private CRServo armNameHere;
+    StandardTrackingWheelLocalizer encoders;
 
     float rfEncoderPosition;
     float rbEncoderPosition;
@@ -178,37 +176,14 @@ public class DeadWheelEncoderTest extends LinearOpMode {
             }
 
 
-            updateEncoderVars();
-
-
-            // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Encoders", "leftEncoder (%.2f), rightEncoder (%.2f), backEncoder (%.2f)", leftEncoderPosition, rightEncoderPosition, backEncoderPosition);
-            telemetry.addData("Encoder Distance", "leftEncoder (%.2f), rightEncoder (%.2f), backEncoder (%.2f)", encoderTicksToInches(leftEncoderPosition), encoderTicksToInches(rightEncoderPosition), encoderTicksToInches(backEncoderPosition));
+            double lEncoder = encoders.getWheelPositions().get(0);
+            double rEncoder = encoders.getWheelPositions().get(1);
+            double fEncoder = encoders.getWheelPositions().get(2);
+            telemetry.addData("Encoders", "leftEncoder (%.2f), rightEncoder (%.2f), frontEncoder (%.2f)", lEncoder, rEncoder, fEncoder);
+            telemetry.addData("Encoder Distance", "leftEncoder (%.2f), rightEncoder (%.2f), frontEncoder (%.2f)", encoderTicksToInches(lEncoder), encoderTicksToInches(rEncoder), encoderTicksToInches(fEncoder));
             telemetry.update();
         }
-    }
-
-    private void updateEncoderVars() {
-
-        rfEncoderPosition = rightFrontDrive.getCurrentPosition();
-        rbEncoderPosition = rightBackDrive.getCurrentPosition();
-        lfEncoderPosition = leftFrontDrive.getCurrentPosition();
-        lbEncoderPosition = leftBackDrive.getCurrentPosition();
-
-        leftEncoderPosition = leftEncoder.getCurrentPosition();
-        rightEncoderPosition = rightEncoder.getCurrentPosition();
-        backEncoderPosition = backEncoder.getCurrentPosition();
-    }
-
-
-
-    public static double encoderTicksToInches(double ticks) {
-        return DEADWHEEL_DIAM_IN * Math.PI * ticks / TICKS_PER_REV_DEAD;
-    }
-
-    public static double encoderInchesToTicks(double inches) {
-        return (inches * TICKS_PER_REV_DEAD) / (DEADWHEEL_DIAM_IN * Math.PI);
     }
 
     // These functions are to prototype and test autonomous
@@ -269,8 +244,8 @@ public class DeadWheelEncoderTest extends LinearOpMode {
          */
 
         // We measure encoder distance based on the average of the left and right encoder
-        double encoderPos = (leftEncoderPosition + rightEncoderPosition) / 2;
-        double ticks = encoderInchesToTicks(inches);
+        double encoderPos = (encoders.getWheelPositions().get(0) + encoders.getWheelPositions().get(1)) / 2;
+        double ticks = AutoData.encoderInchesToTicks(inches);
 
         // Moving forward if we are not at the destination
         if (encoderPos < ticks)
@@ -305,9 +280,6 @@ public class DeadWheelEncoderTest extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
 
-        leftEncoder = hardwareMap.get(DcMotor.class, "leftE");
-        rightEncoder = hardwareMap.get(DcMotor.class, "rightE");
-        backEncoder = hardwareMap.get(DcMotor.class, "midE");
 //        armNameHere = hardwareMap.get(CRServo.class, "clawServo");
 
         // Setting the motor encoder position to zero
@@ -315,10 +287,6 @@ public class DeadWheelEncoderTest extends LinearOpMode {
         leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 
         // Ensuring the motors get the instructions
@@ -330,9 +298,7 @@ public class DeadWheelEncoderTest extends LinearOpMode {
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        leftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        encoders = new StandardTrackingWheelLocalizer(hardwareMap);
     }
 
 

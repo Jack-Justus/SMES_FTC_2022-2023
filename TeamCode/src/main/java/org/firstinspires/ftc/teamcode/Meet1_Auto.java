@@ -139,7 +139,7 @@ public class Meet1_Auto extends LinearOpMode {
         // First Move
         final int DISTANCE = 10; //in
         Trajectory move1 = drive.trajectoryBuilder(new Pose2d())
-                .forward(DISTANCE)
+                .splineToSplineHeading(new Pose2d(40, 40, Math.toRadians(90)), Math.toRadians(0))
                 .build();
 
 
@@ -154,44 +154,38 @@ public class Meet1_Auto extends LinearOpMode {
             Once one phase of instructions is complete, we will move to the next.
              */
 
-            switch (autoPhase) {
 
-                case 0: {
-                    // Starting by moving and raising the lift
+            // Starting by moving and raising the lift
 //                    if (moveLift(1000) && move(10, 0)) {
 //                        sleep(1000);
 //                        autoPhase = 1;
 //                    }
-                    drive.followTrajectory(move1);
+            drive.followTrajectory(move1);
 
-                    Pose2d poseEstimate = drive.getPoseEstimate();
-                    telemetry.addData("finalX", poseEstimate.getX());
-                    telemetry.addData("finalY", poseEstimate.getY());
-                    telemetry.addData("finalHeading", poseEstimate.getHeading());
-                    //telemetry.addLine("encoder dist travelled: ");
+            Pose2d poseEstimate = drive.getPoseEstimate();
+            telemetry.addData("finalX", poseEstimate.getX());
+            telemetry.addData("finalY", poseEstimate.getY());
+            telemetry.addData("finalHeading", poseEstimate.getHeading());
+            //telemetry.addLine("encoder dist travelled: ");
+            // Computer vision
+            switch (checkConeState()) {
+
+                case 0:
+                    //park in leftmost square
                     break;
-                }
-                case 1: {
-                    // Computer vision
-                    switch (checkConeState()) {
-
-                        case 0:
-                            //park in leftmost square
-                            break;
-                        case 1:
-                            //park in middle square
-                            break;
-                        case 2:
-                            //park in rightmost square
-                            break;
-                        default:
-                            // TODO: Thoughts on what we should do if the camera can't see anything?
-                            // we should park somewhere that'll still get us points w/o the cv if it doesn't detect
-
-                            break;
-                    }
+                case 1:
+                    //park in middle square
                     break;
-                }
+                case 2:
+                    //park in rightmost square
+                    break;
+                default:
+                    // TODO: Thoughts on what we should do if the camera can't see anything?
+                    // we should park somewhere that'll still get us points w/o the cv if it doesn't detect
+
+                    break;
+
+
             }
         }
     }

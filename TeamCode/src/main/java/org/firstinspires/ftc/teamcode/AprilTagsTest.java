@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -39,6 +40,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 import org.openftc.apriltag.*;
 import org.openftc.easyopencv.*;
 
@@ -60,22 +63,22 @@ import java.util.ArrayList;
 //drive straight forward
 // (line up robot touching back wall at an angle so that driving straight forward corresponds with tallest pole)
 // then, lift arm, drop off pre-load cone
-@Autonomous
+@TeleOp
 public class AprilTagsTest extends LinearOpMode {
     OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
 
     static final double FEET_PER_METER = 3.28084;
 
-    private DcMotor rightFrontDrive = null;
-    private DcMotor rightBackDrive = null;
-    private DcMotor leftFrontDrive = null;
-    private DcMotor leftBackDrive = null;
+//    private DcMotor rightFrontDrive = null;
+//    private DcMotor rightBackDrive = null;
+//    private DcMotor leftFrontDrive = null;
+//    private DcMotor leftBackDrive = null;
     private DcMotor vertLinearSlide = null;
-    private Servo claw = null;
+    SampleMecanumDrive drive = null;
+    private CRServo claw = null;
 
     // hor slide (no claw)
-    private DcMotor horLinearSlide = null;
 
     // Lens intrinsics
     // UNITS ARE PIXELS
@@ -100,6 +103,8 @@ public class AprilTagsTest extends LinearOpMode {
     public void runOpMode() {
 
         initializeHardware();
+
+        waitForStart();
 
         while (opModeIsActive()) {
 
@@ -193,6 +198,8 @@ public class AprilTagsTest extends LinearOpMode {
 
             /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
         }
+
+        while (opModeIsActive()) {sleep(20);}
     }
 
     void tagToTelemetry(AprilTagDetection detection)
@@ -205,48 +212,51 @@ public class AprilTagsTest extends LinearOpMode {
         telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
         telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
     }
-    private void initializeHardware() {
+    public void initializeHardware() {
 
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
-        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
-        vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
-        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
-        claw = hardwareMap.get(Servo.class, "claw");
+//        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
+//        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
+//        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
+//        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
+//        drive = new SampleMecanumDrive(hardwareMap);
+//        vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
+////        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
+//        claw = hardwareMap.get(CRServo.class, "claw");
+//
+//        // init slides
+//        vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        vertLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        vertLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // init slides
-        vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        vertLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        vertLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        horLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        horLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        horLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        horLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        horLinearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        horLinearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
         // Setting the motor encoder position to zero
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        drive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Ensuring the motors get the instructions
         sleep(100);
 
-        // This makes sure the motors are moving at the same speed
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        // This makes sure the motors are not using encoders (we don't use them)
+//        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Setting up the encoders
-//        encoderLeft = hardwareMap.get(DcMotor.class, "ENCODER Left");
-//        encoderRight = hardwareMap.get(DcMotor.class, "ENCODER Right");
-//        encoderAux = hardwareMap.get(DcMotor.class, "ENCODER Aux");
+//        leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+//        leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+//        rightFrontDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+//        rightBackDrive.setDirection(DcMotorSimple.Direction.FORWARD);
 
     }
 }

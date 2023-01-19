@@ -137,11 +137,37 @@ public class Meet1_Auto extends LinearOpMode {
         telemetry.update();
 
         // First Move
-        final int DISTANCE = 10; //in
-        Trajectory move1 = drive.trajectoryBuilder(new Pose2d())
-                .splineToSplineHeading(new Pose2d(40, 40, Math.toRadians(90)), Math.toRadians(0))
+        //all in inches btw
+
+        double initialForward = 7.5;
+
+        Trajectory coneMovement = drive.trajectoryBuilder(new Pose2d())
+                .forward(initialForward)
                 .build();
 
+        Trajectory returnToSquare = drive.trajectoryBuilder(new Pose2d())
+                .back(initialForward)
+                .build();
+
+        Trajectory strafeToCenter = drive.trajectoryBuilder(new Pose2d())
+                .strafeRight(10)
+                .build();
+
+        Trajectory coneScanPos = drive.trajectoryBuilder(new Pose2d())
+                .forward(8)
+                .build();
+
+        Trajectory strafeToLeft = drive.trajectoryBuilder(new Pose2d())
+                .strafeLeft(24)
+                .build();
+
+        Trajectory middleSquare = drive.trajectoryBuilder(new Pose2d())
+                .forward(19)
+                .build();
+
+        Trajectory strafeToRight = drive.trajectoryBuilder(new Pose2d())
+                .strafeRight(24)
+                .build();
 
         waitForStart();
         runtime.reset();
@@ -154,38 +180,75 @@ public class Meet1_Auto extends LinearOpMode {
             Once one phase of instructions is complete, we will move to the next.
              */
 
+            switch (autoPhase) {
 
-            // Starting by moving and raising the lift
-//                    if (moveLift(1000) && move(10, 0)) {
-//                        sleep(1000);
-//                        autoPhase = 1;
-//                    }
-            drive.followTrajectory(move1);
+                case 0: {
+                    // Starting by moving and raising the lift
+                    if (moveLift(300)) {
+                        sleep(3000);
+                    }
 
-            Pose2d poseEstimate = drive.getPoseEstimate();
-            telemetry.addData("finalX", poseEstimate.getX());
-            telemetry.addData("finalY", poseEstimate.getY());
-            telemetry.addData("finalHeading", poseEstimate.getHeading());
-            //telemetry.addLine("encoder dist travelled: ");
-            // Computer vision
-            switch (checkConeState()) {
+                    sleep(5000);
 
-                case 0:
-                    //park in leftmost square
+                    //we start in front of pole
+                    //so go forward a tiny bit
+                    drive.followTrajectory(coneMovement);
+
+                    //place cone on pole here
+
+                    claw.setPower(1);
+
+                    sleep(3000);
+
+                    claw.setPower(0);
+
+                    //delift arm here
+                    if (moveLift(0)) {
+                        sleep(1000);
+                    }
+
+                    //goes to the parking signal
+                    drive.followTrajectory(returnToSquare);
+                    drive.followTrajectory(strafeToCenter);
+                    drive.followTrajectory(coneScanPos);
+
+                    //now detect cone and park
+                    autoPhase = 1;
+
+                    Pose2d poseEstimate = drive.getPoseEstimate();
+                    telemetry.addData("finalX", poseEstimate.getX());
+                    telemetry.addData("finalY", poseEstimate.getY());
+                    telemetry.addData("finalHeading", poseEstimate.getHeading());
+                    //telemetry.addLine("encoder dist travelled: ");
                     break;
-                case 1:
-                    //park in middle square
-                    break;
-                case 2:
-                    //park in rightmost square
-                    break;
-                default:
-                    // TODO: Thoughts on what we should do if the camera can't see anything?
-                    // we should park somewhere that'll still get us points w/o the cv if it doesn't detect
+                }
+                case 1: {
+                    // Computer vision
+                    switch (checkConeState()) {
 
+                        case 0:
+                            //park in leftmost square
+                            drive.followTrajectory(middleSquare);
+                            drive.followTrajectory(strafeToLeft);
+                            break;
+                        case 1:
+                            //park in middle square
+                            drive.followTrajectory(middleSquare);
+                            break;
+                        case 2:
+                            //park in rightmost square
+                            drive.followTrajectory(middleSquare);
+                            drive.followTrajectory(strafeToRight);
+                            break;
+                        default:
+                            // TODO: Thoughts on what we should do if the camera can't see anything?
+                            // we should park somewhere that'll still get us points w/o the cv if it doesn't detect
+                            //right now it just parks in the middle square
+                            drive.followTrajectory(middleSquare);
+                            break;
+                    }
                     break;
-
-
+                }
             }
         }
     }

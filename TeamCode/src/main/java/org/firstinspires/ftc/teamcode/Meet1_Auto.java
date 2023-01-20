@@ -289,8 +289,9 @@ public class Meet1_Auto extends LinearOpMode {
 
         telemetry.setMsTransmissionInterval(50);
         ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
-
-        while (currentDetections.size() == 0) {
+        //if it can't detect the tag in 10 detection cycles, i define this as unable to detect the tag
+        //this means itll just go to the middle square
+        while (currentDetections.size() < 10) {
             currentDetections = aprilTagDetectionPipeline.getLatestDetections();
             if (currentDetections.size() != 0) {
                 boolean tagFound = false;
@@ -310,6 +311,7 @@ public class Meet1_Auto extends LinearOpMode {
                     }
                 }
             }
+            sleep(100);
         }
         return 1;
     }

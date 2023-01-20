@@ -124,6 +124,14 @@ public class Meet1_Auto extends LinearOpMode {
     int PARK_MIDDLE = 15;
     int PARK_RIGHT = 17;
 
+    //other cv stuff
+    int numFramesWithoutDetection = 0;
+
+    final float DECIMATION_HIGH = 3;
+    final float DECIMATION_LOW = 2;
+    final float THRESHOLD_HIGH_DECIMATION_RANGE_METERS = 1.0f;
+    final int THRESHOLD_NUM_FRAMES_NO_DETECTION_BEFORE_LOW_DECIMATION = 4;
+
     AprilTagDetection tagOfInterest = null;
 
     @Override
@@ -139,7 +147,7 @@ public class Meet1_Auto extends LinearOpMode {
         // First Move
         //all in inches btw
 
-        double initialForward = 7.5;
+        double initialForward = 7;
 
         Trajectory coneMovement = drive.trajectoryBuilder(new Pose2d())
                 .forward(initialForward)
@@ -150,11 +158,11 @@ public class Meet1_Auto extends LinearOpMode {
                 .build();
 
         Trajectory strafeToCenter = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(10)
+                .strafeRight(12)
                 .build();
 
         Trajectory coneScanPos = drive.trajectoryBuilder(new Pose2d())
-                .forward(8)
+                .forward(9)
                 .build();
 
         Trajectory strafeToLeft = drive.trajectoryBuilder(new Pose2d())
@@ -179,6 +187,7 @@ public class Meet1_Auto extends LinearOpMode {
             This is so that we don't have the motors receiving contradictory commands.
             Once one phase of instructions is complete, we will move to the next.
              */
+
 
             switch (autoPhase) {
 
@@ -225,18 +234,23 @@ public class Meet1_Auto extends LinearOpMode {
                 case 1: {
                     // Computer vision
                     switch (checkConeState()) {
-
                         case 0:
                             //park in leftmost square
+                            telemetry.addLine("parking leftward");
+                            telemetry.update();
                             drive.followTrajectory(middleSquare);
                             drive.followTrajectory(strafeToLeft);
                             break;
                         case 1:
                             //park in middle square
+                            telemetry.addLine("parking middle");
+                            telemetry.update();
                             drive.followTrajectory(middleSquare);
                             break;
                         case 2:
                             //park in rightmost square
+                            telemetry.addLine("parking right square");
+                            telemetry.update();
                             drive.followTrajectory(middleSquare);
                             drive.followTrajectory(strafeToRight);
                             break;
@@ -244,6 +258,8 @@ public class Meet1_Auto extends LinearOpMode {
                             // TODO: Thoughts on what we should do if the camera can't see anything?
                             // we should park somewhere that'll still get us points w/o the cv if it doesn't detect
                             //right now it just parks in the middle square
+                            telemetry.addLine("couldn't find april tag, parking in middle");
+                            telemetry.update();
                             drive.followTrajectory(middleSquare);
                             break;
                     }
@@ -254,7 +270,6 @@ public class Meet1_Auto extends LinearOpMode {
     }
 
     private int checkConeState() {
-        // Andrew this function is for your computer vision
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "wbcam"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -268,59 +283,35 @@ public class Meet1_Auto extends LinearOpMode {
 
             @Override
             public void onError(int errorCode) {
-                //error things?
+
             }
         });
+
         telemetry.setMsTransmissionInterval(50);
+        ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
 
-        while (!isStarted() && !isStopRequested()) {
-            ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
-
+        while (currentDetections.size() == 0) {
+            currentDetections = aprilTagDetectionPipeline.getLatestDetections();
             if (currentDetections.size() != 0) {
                 boolean tagFound = false;
 
                 for (AprilTagDetection tag : currentDetections) {
-                    if (tag.id == PARK_LEFT || tag.id == PARK_MIDDLE || tag.id == PARK_RIGHT) {
+                    if (tag.id == PARK_LEFT) {
                         tagOfInterest = tag;
-                        tagFound = true;
-                        break;
+                        return 0;
+                    }
+                    if (tag.id == PARK_MIDDLE) {
+                        tagOfInterest = tag;
+                        return 1;
+                    }
+                    if (tag.id == PARK_RIGHT) {
+                        tagOfInterest = tag;
+                        return 2;
                     }
                 }
-
-                //will rewrite most of this later, it works for now though
-
-                if (tagFound) {
-                    telemetry.addLine("tag in sight");
-                } else {
-                    telemetry.addLine("don't see any parking tags");
-
-                    if (tagOfInterest == null) {
-                        telemetry.addLine("don't see any parking tags");
-                    }
-                }
-
-            } else {
-                telemetry.addLine("Don't see tags");
             }
-            telemetry.update();
-            sleep(20);
         }
-
-        //returns which spot to park based on the april tag
-        //0 - left square
-        //1 - middle square
-        //2 - right square
-        if (tagOfInterest.id == PARK_LEFT) {
-            return 0;
-        }
-        if (tagOfInterest.id == PARK_MIDDLE || tagOfInterest == null) {
-            return 1;
-        }
-        if (tagOfInterest.id == PARK_RIGHT) {
-            return 2;
-        }
-
-        return 0;
+        return 1;
     }
 
     private boolean moveLift(int targetTicks) {
@@ -478,6 +469,17 @@ public class Meet1_Auto extends LinearOpMode {
         encoders = new StandardTrackingWheelLocalizer(hardwareMap);
 
         drive.setMotorsBreakMode();
+    }
+
+    void tagToTelemetry(AprilTagDetection detection)
+    {
+        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
+        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
+        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
+        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
+        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
+        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
+        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
     }
 
 }

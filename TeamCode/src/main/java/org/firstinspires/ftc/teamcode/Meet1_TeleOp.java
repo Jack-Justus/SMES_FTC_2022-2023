@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -73,6 +74,7 @@ public class Meet1_TeleOp extends LinearOpMode {
     // vert Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
     private CRServo claw = null;
+    private Servo joe = null;
 
     // hor slide (no claw)
 //    private DcMotor horLinearSlide = null;
@@ -181,10 +183,10 @@ public class Meet1_TeleOp extends LinearOpMode {
         // Driving is handled on gamepad1
         Gamepad gp = gamepad1;
 
-        x = -gp.left_stick_x;
-        y = gp.left_stick_y;
+        x = gp.left_stick_x;
+        y = -gp.left_stick_y;
 
-        rot = -gp.right_stick_x;
+        rot = gp.right_stick_x;
 
         double maxSpeed = 0.7;
 
@@ -253,6 +255,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
 //        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
         claw = hardwareMap.get(CRServo.class, "claw");
+        joe = hardwareMap.get(Servo.class, "joe");
 
         // init slides
         vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -431,6 +434,9 @@ public class Meet1_TeleOp extends LinearOpMode {
          *      R Trigger:
          * OPEN CLAW
          *
+         *      JOE:
+         *      x and y
+         *
          *********************/
 
         double CLAW_CLOSED = 1;
@@ -442,6 +448,14 @@ public class Meet1_TeleOp extends LinearOpMode {
             claw.setPower(gp.right_trigger);
         else
             claw.setPower(0);
+
+        //controls for the joe
+        if (gp.x) {
+            joe.setPosition(0);
+        }
+        if (gp.y) {
+            joe.setPosition(1);
+        }
     }
 
     public void setMotorsBreakMode() {

@@ -30,28 +30,16 @@
 package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.teamcode.AutoData.encoderInchesToTicks;
-import static org.firstinspires.ftc.teamcode.AutoData.encoderTicksToInches;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
@@ -59,7 +47,6 @@ import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.openftc.apriltag.*;
 import org.openftc.easyopencv.*;
-import org.firstinspires.ftc.teamcode.AutoData;
 
 import java.util.ArrayList;
 
@@ -80,7 +67,7 @@ import java.util.ArrayList;
 // (line up robot touching back wall at an angle so that driving straight forward corresponds with tallest pole)
 // then, lift arm, drop off pre-load cone
 @Autonomous
-public class Meet1_Auto extends LinearOpMode {
+public class Meet3_Auto_LStrafe extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -148,7 +135,8 @@ public class Meet1_Auto extends LinearOpMode {
         // First Move
         //all in inches btw
 
-        double initialForward = 7;
+        double initialForward = 5.5;
+        double initialStrafe = 10.5;
 
         Trajectory coneMovement = drive.trajectoryBuilder(new Pose2d())
                 .forward(initialForward)
@@ -159,23 +147,27 @@ public class Meet1_Auto extends LinearOpMode {
                 .build();
 
         Trajectory strafeToCenter = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(12)
+                .strafeRight(initialStrafe)
+                .build();
+
+        Trajectory strafeToPole = drive.trajectoryBuilder(new Pose2d())
+                .strafeLeft(initialStrafe)
                 .build();
 
         Trajectory coneScanPos = drive.trajectoryBuilder(new Pose2d())
-                .forward(9)
+                .forward(6)
                 .build();
 
         Trajectory strafeToLeft = drive.trajectoryBuilder(new Pose2d())
-                .strafeLeft(24)
+                .strafeLeft(22)
                 .build();
 
         Trajectory middleSquare = drive.trajectoryBuilder(new Pose2d())
-                .forward(19)
+                .forward(14)
                 .build();
 
         Trajectory strafeToRight = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(24)
+                .strafeRight(23)
                 .build();
 
         waitForStart();
@@ -193,6 +185,8 @@ public class Meet1_Auto extends LinearOpMode {
             switch (autoPhase) {
 
                 case 0: {
+                    //strafe t pole
+                    drive.followTrajectory(strafeToPole);
                     // Starting by moving and raising the lift
                     if (moveLift(300)) {
                         sleep(3000);
@@ -216,6 +210,8 @@ public class Meet1_Auto extends LinearOpMode {
                     if (moveLift(0)) {
                         sleep(1000);
                     }
+
+                    vertLinearSlide.setPower(0);
 
                     //goes to the parking signal
                     drive.followTrajectory(returnToSquare);
@@ -267,6 +263,7 @@ public class Meet1_Auto extends LinearOpMode {
                     break;
                 }
             }
+
         }
     }
 
@@ -292,7 +289,7 @@ public class Meet1_Auto extends LinearOpMode {
         ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
         //if it can't detect the tag in 10 detection cycles, i define this as unable to detect the tag
         //this means itll just go to the middle square
-        while (currentDetections.size() < 10) {
+        while (currentDetections.size() < 10 && opModeIsActive()) {
             currentDetections = aprilTagDetectionPipeline.getLatestDetections();
             if (currentDetections.size() != 0) {
                 boolean tagFound = false;

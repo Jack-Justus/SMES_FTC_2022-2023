@@ -74,6 +74,7 @@ public class Meet1_TeleOp extends LinearOpMode {
     // vert Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
     private CRServo claw = null;
+    private Servo joe = null;
 //    private Servo joe = null;
 
     // hor slide (no claw)
@@ -255,6 +256,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
 //        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
         claw = hardwareMap.get(CRServo.class, "claw");
+        joe = hardwareMap.get(Servo.class, "joe");
 //        joe = hardwareMap.get(Servo.class, "joe");
 
         // init slides
@@ -439,8 +441,6 @@ public class Meet1_TeleOp extends LinearOpMode {
          *
          *********************/
 
-        double CLAW_CLOSED = 1;
-        double CLAW_OPEN = 0;
 
         if (gp.left_trigger > 0.1)
             claw.setPower(-gp.left_trigger);
@@ -449,13 +449,14 @@ public class Meet1_TeleOp extends LinearOpMode {
         else
             claw.setPower(0);
 
-        //controls for the joe
-//        if (gp.x) {
-//            joe.setPosition(0);
-//        }
-//        if (gp.y) {
-//            joe.setPosition(1);
-//        }
+        // Joe code
+        double CLAW_CLOSED = 1;
+        double CLAW_OPEN = 0;
+        if (gp.x) {
+            joe.setPosition(CLAW_CLOSED);
+        } else if (gp.y) {
+            joe.setPosition(CLAW_OPEN);
+        }
     }
 
     public void setMotorsBreakMode() {

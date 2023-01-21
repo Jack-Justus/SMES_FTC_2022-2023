@@ -98,6 +98,7 @@ public class Meet1_Auto extends LinearOpMode {
     private DcMotor vertLinearSlide = null;
     private CRServo claw = null;
 
+
     private int autoPhase = 0;
 
     //encoder
@@ -323,7 +324,7 @@ public class Meet1_Auto extends LinearOpMode {
         // Constants
         double liftTicks = vertLinearSlide.getCurrentPosition();
         final double LIFT_IDLE_POWER = 0.3;
-        final double LIFT_MID_POWER = -0.3;
+        final double LIFT_MIN_POWER = -0.3;
         final double LIFT_MAX_POWER = 1.0;
 
 
@@ -336,7 +337,7 @@ public class Meet1_Auto extends LinearOpMode {
 
         double distToTarget = -(liftTicks - targetTicks);
 
-        double calcPower = Range.clip(distToTarget / 1000, LIFT_MID_POWER, LIFT_MAX_POWER);
+        double calcPower = Range.clip(distToTarget / 1000, LIFT_MIN_POWER, LIFT_MAX_POWER);
 
         vertLinearSlide.setPower(calcPower);
 

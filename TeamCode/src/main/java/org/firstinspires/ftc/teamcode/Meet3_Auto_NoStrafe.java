@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -83,7 +84,7 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
 
     //Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
-    private CRServo claw = null;
+    private Servo claw = null;
 
     private int autoPhase = 0;
 
@@ -402,13 +403,13 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
         }
     }
 
-    private void closeClaw() {
-        claw.setPower(1);
-    }
-
-    private void openClaw() {
-        claw.setPower(-1);
-    }
+//    private void closeClaw() {
+//        claw.setPower(1);
+//    }
+//
+//    private void openClaw() {
+//        claw.setPower(-1);
+//    }
 
     private void initializeHardware() {
 
@@ -422,7 +423,7 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
         drive = new SampleMecanumDrive(hardwareMap);
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
 //        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
-        claw = hardwareMap.get(CRServo.class, "claw");
+        claw = hardwareMap.get(Servo.class, "claw");
 
         // init slides
         vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

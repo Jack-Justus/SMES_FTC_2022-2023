@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -83,7 +84,7 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
 
     //Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
-    private CRServo claw = null;
+    private Servo claw = null;
 
 
     private int autoPhase = 0;
@@ -200,11 +201,11 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
 
                     //place cone on pole here
 
-                    claw.setPower(1);
+                    claw.setPosition(1);
 
                     sleep(3000);
 
-                    claw.setPower(0);
+                    claw.setPosition(0);
 
                     //delift arm here
                     if (moveLift(0)) {
@@ -287,30 +288,41 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
 
         telemetry.setMsTransmissionInterval(50);
         ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
-        //if it can't detect the tag in 10 detection cycles, i define this as unable to detect the tag
-        //this means itll just go to the middle square
-        while (currentDetections.size() < 10 && opModeIsActive()) {
+        int retryCount = 0;
+        while (currentDetections == null && opModeIsActive() && retryCount < 5) {
             currentDetections = aprilTagDetectionPipeline.getLatestDetections();
-            if (currentDetections.size() != 0) {
-                boolean tagFound = false;
-
-                for (AprilTagDetection tag : currentDetections) {
-                    if (tag.id == PARK_LEFT) {
-                        tagOfInterest = tag;
-                        return 0;
-                    }
-                    if (tag.id == PARK_MIDDLE) {
-                        tagOfInterest = tag;
-                        return 1;
-                    }
-                    if (tag.id == PARK_RIGHT) {
-                        tagOfInterest = tag;
-                        return 2;
-                    }
-                }
-            }
+            retryCount++;
             sleep(100);
         }
+        if (retryCount == 5) {
+            return 1;
+        }
+        //if it can't detect the tag in 10 detection cycles, i define this as unable to detect the tag
+        //this means itll just go to the middle square
+            while (currentDetections.size() < 5 && opModeIsActive()) {
+                currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+                if (currentDetections != null) {
+                    if (currentDetections.size() != 0) {
+                        boolean tagFound = false;
+
+                        for (AprilTagDetection tag : currentDetections) {
+                            if (tag.id == PARK_LEFT) {
+                                tagOfInterest = tag;
+                                return 0;
+                            }
+                            if (tag.id == PARK_MIDDLE || tag == null) {
+                                tagOfInterest = tag;
+                                return 1;
+                            }
+                            if (tag.id == PARK_RIGHT) {
+                                tagOfInterest = tag;
+                                return 2;
+                            }
+                        }
+                    }
+                    sleep(100);
+                }
+            }
         return 1;
     }
 
@@ -411,13 +423,6 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
         }
     }
 
-    private void closeClaw() {
-        claw.setPower(1);
-    }
-
-    private void openClaw() {
-        claw.setPower(-1);
-    }
 
     private void initializeHardware() {
 
@@ -431,7 +436,7 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
         drive = new SampleMecanumDrive(hardwareMap);
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
 //        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
-        claw = hardwareMap.get(CRServo.class, "claw");
+        claw = hardwareMap.get(Servo.class, "claw");
 
         // init slides
         vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

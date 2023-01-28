@@ -73,7 +73,7 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     // vert Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
-    private CRServo claw = null;
+    private Servo claw = null;
 //    private Servo joe = null;
 //    private Servo joe = null;
 
@@ -192,11 +192,11 @@ public class Meet1_TeleOp extends LinearOpMode {
         double maxSpeed = 0.7;
 
         // Drive Code
-        lfp = Range.clip(x + y, -maxSpeed, maxSpeed);
-        lbp = Range.clip(y - x, -maxSpeed, maxSpeed);
+        lfp = Range.clip(x - y, -maxSpeed, maxSpeed);
+        lbp = Range.clip(y + x, -maxSpeed, maxSpeed);
 
-        rfp = Range.clip(y - x, -maxSpeed, maxSpeed);
-        rbp = Range.clip(x + y, -maxSpeed, maxSpeed);
+        rfp = Range.clip(y + x, -maxSpeed, maxSpeed);
+        rbp = Range.clip(x - y, -maxSpeed, maxSpeed);
 
         // Fast rotation
         if (gp.right_stick_button)
@@ -255,7 +255,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         drive = new SampleMecanumDrive(hardwareMap);
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
 //        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
-        claw = hardwareMap.get(CRServo.class, "claw");
+        claw = hardwareMap.get(Servo.class, "claw");
 //        joe = hardwareMap.get(Servo.class, "joe");
 
         // init slides
@@ -435,18 +435,18 @@ public class Meet1_TeleOp extends LinearOpMode {
          *      R Trigger:
          * OPEN CLAW
          *
-         *      JOE (currently not enabled):
-         *      x and y
+         *      MARY (currently not enabled):
+         *      ????
          *
          *********************/
 
 
-        if (gp.left_trigger > 0.1)
-            claw.setPower(-gp.left_trigger);
-        else if (gp.right_trigger > 0.1)
-            claw.setPower(gp.right_trigger);
-        else
-            claw.setPower(0);
+        if (gp.x)
+            claw.setPosition(0);
+        else if (gp.b)
+            claw.setPosition(1);
+//        else
+//            claw.setPosition(0);
 
         // Joe code
 //        double CLAW_CLOSED = 1;

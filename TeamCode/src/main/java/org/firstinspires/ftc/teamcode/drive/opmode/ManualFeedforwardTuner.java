@@ -43,7 +43,6 @@ import java.util.Objects;
  */
 @Config
 @Autonomous(group = "TeleOp")
-@Disabled
 public class ManualFeedforwardTuner extends LinearOpMode {
     public static double DISTANCE = 72; // in
 

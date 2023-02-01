@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -184,19 +185,19 @@ public class Meet1_TeleOp extends LinearOpMode {
         // Driving is handled on gamepad1
         Gamepad gp = gamepad1;
 
-        x = gp.left_stick_x;
+        x = -gp.left_stick_x;
         y = -gp.left_stick_y;
 
-        rot = gp.right_stick_x;
+        rot = -gp.right_stick_x;
 
         double maxSpeed = 0.7;
 
         // Drive Code
-        lfp = Range.clip(x - y, -maxSpeed, maxSpeed);
-        lbp = Range.clip(y + x, -maxSpeed, maxSpeed);
+        lfp = Range.clip(x + y, -maxSpeed, maxSpeed);
+        lbp = Range.clip(y - x, -maxSpeed, maxSpeed);
 
-        rfp = Range.clip(y + x, -maxSpeed, maxSpeed);
-        rbp = Range.clip(x - y, -maxSpeed, maxSpeed);
+        rfp = Range.clip(y - x, -maxSpeed, maxSpeed);
+        rbp = Range.clip(x + y, -maxSpeed, maxSpeed);
 
         // Fast rotation
         if (gp.right_stick_button)

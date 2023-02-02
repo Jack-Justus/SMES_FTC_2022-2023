@@ -289,14 +289,17 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
                 for (AprilTagDetection tag : currentDetections) {
                     if (tag.id == PARK_LEFT) {
                         tagOfInterest = tag;
+                        camera.closeCameraDevice();
                         return 0;
                     }
                     if (tag.id == PARK_MIDDLE) {
                         tagOfInterest = tag;
+                        camera.closeCameraDevice();
                         return 1;
                     }
                     if (tag.id == PARK_RIGHT) {
                         tagOfInterest = tag;
+                        camera.closeCameraDevice();
                         return 2;
                     }
                 }

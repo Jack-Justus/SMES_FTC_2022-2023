@@ -137,8 +137,8 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
         // First Move
         //all in inches btw
 
-        double initialForward = 14;
-        double initialStrafe = 13;
+        double initialForward = 12.5;
+        double initialStrafe = 12.5;
 
         Trajectory coneMovement = drive.trajectoryBuilder(new Pose2d())
                 .forward(initialForward)
@@ -149,7 +149,7 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
                 .build();
 
         Trajectory strafeToCenter = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(initialStrafe)
+                .strafeRight(initialStrafe + 1.5)
                 .build();
 
         Trajectory strafeToPole = drive.trajectoryBuilder(new Pose2d())
@@ -161,15 +161,15 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
 //                .build();
 
         Trajectory strafeToLeft = drive.trajectoryBuilder(new Pose2d())
-                .strafeLeft(26)
+                .strafeLeft(27) //change this?
                 .build();
 
         Trajectory middleSquare = drive.trajectoryBuilder(new Pose2d())
-                .forward(27)
+                .forward(23)
                 .build();
 
         Trajectory strafeToRight = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(25.5)
+                .strafeRight(28.5)
                 .build();
 
         waitForStart();
@@ -184,14 +184,14 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
              */
 
 
-            if (autoPhase== 0) {
+            if (autoPhase == 0) {
                     //strafe to pole
                     claw.setPosition(1);
 
                     drive.followTrajectory(strafeToPole);
                     // Starting by moving and raising the lift
                     vertLinearSlide.setPower(.5);
-                    while (opModeIsActive() && Math.abs(vertLinearSlide.getCurrentPosition()) < (1450)) {
+                    while (opModeIsActive() && Math.abs(vertLinearSlide.getCurrentPosition()) < (1500)) {
                         idle();
                     }
                     vertLinearSlide.setPower(0);
@@ -225,6 +225,7 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
                     //goes to the parking signal
                     drive.followTrajectory(returnToSquare);
                     drive.followTrajectory(strafeToCenter);
+
 //                    drive.followTrajectory(coneScanPos);
 
                     //now detect cone and park

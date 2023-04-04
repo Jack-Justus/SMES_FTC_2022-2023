@@ -67,10 +67,7 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     // Left and Right Drive Motor Objects
     SampleMecanumDrive drive = null;
-//    private DcMotor rightFrontDrive = null;
-//    private DcMotor rightBackDrive = null;
-//    private DcMotor leftFrontDrive = null;
-//    private DcMotor leftBackDrive = null;
+
 
     // vert Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
@@ -185,7 +182,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         // Driving is handled on gamepad1
         Gamepad gp = gamepad1;
 
-        x = -gp.left_stick_x;
+        x = gp.left_stick_x;
         y = -gp.left_stick_y;
 
         rot = -gp.right_stick_x;
@@ -236,6 +233,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         telemetry.addData("Motor Power", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
         telemetry.addData("Speed Modifier", "Master (%.2f), Rotational (%.2f)", speedModifier, rotSpeed);
         telemetry.addData("Slide encoder value: ", vertLinearSlide.getCurrentPosition());
+        telemetry.addData("Slide power", vertLinearSlide.getPower());
         telemetry.addData("Left Encoder", encoders.getWheelPositions().get(0));
         telemetry.addData("Right Encoder", encoders.getWheelPositions().get(1));
         telemetry.addData("Front Encoder", encoders.getWheelPositions().get(2));
@@ -409,15 +407,18 @@ public class Meet1_TeleOp extends LinearOpMode {
                     else if (vertLinearSlide.getCurrentPosition() < 400)
                         // Goes up faster and down slower if we are at the bottom
                         if (power > 0)
-                            power = power * 0.6;
+                            power = power * 1;
                         else
-                            power = power * 0.3;
+                            power = power * 0.6;
 
                 }
 
                 // modifying power based on slide position
 
-                vertLinearSlide.setPower(power);
+                // Making sure the slide doesn't fall
+                if (vertLinearSlide.getCurrentPosition() < -1000)
+                    power += 0.2;
+                vertLinearSlide.setPower(Range.clip(-power, -1.0, 1.0));
                 break;
         }
 
@@ -442,10 +443,10 @@ public class Meet1_TeleOp extends LinearOpMode {
          *********************/
 
 
-        if (gp.x)
-            claw.setPosition(0);
-        else if (gp.b)
+        if (gp.b)
             claw.setPosition(1);
+        else if (gp.x)
+            claw.setPosition(0.7);
 //        else
 //            claw.setPosition(0);
 

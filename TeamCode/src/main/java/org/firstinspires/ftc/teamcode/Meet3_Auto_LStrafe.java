@@ -137,8 +137,8 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
         // First Move
         //all in inches btw
 
-        double initialForward = 12.5;
-        double initialStrafe = 12.5;
+        double initialForward = 11.2;
+        double initialStrafe = 13;
 
         Trajectory coneMovement = drive.trajectoryBuilder(new Pose2d())
                 .forward(initialForward)
@@ -149,7 +149,7 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
                 .build();
 
         Trajectory strafeToCenter = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(initialStrafe + 1.5)
+                .strafeRight(initialStrafe + .7)
                 .build();
 
         Trajectory strafeToPole = drive.trajectoryBuilder(new Pose2d())
@@ -161,15 +161,15 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
 //                .build();
 
         Trajectory strafeToLeft = drive.trajectoryBuilder(new Pose2d())
-                .strafeLeft(27) //change this?
+                .strafeLeft(25.5)
                 .build();
 
         Trajectory middleSquare = drive.trajectoryBuilder(new Pose2d())
-                .forward(23)
+                .forward(24.4)
                 .build();
 
         Trajectory strafeToRight = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(28.5)
+                .strafeRight(25)
                 .build();
 
         waitForStart();
@@ -191,7 +191,7 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
                     drive.followTrajectory(strafeToPole);
                     // Starting by moving and raising the lift
                     vertLinearSlide.setPower(.5);
-                    while (opModeIsActive() && Math.abs(vertLinearSlide.getCurrentPosition()) < (1500)) {
+                    while (opModeIsActive() && Math.abs(vertLinearSlide.getCurrentPosition()) < (1300)) {
                         idle();
                     }
                     vertLinearSlide.setPower(0);
@@ -206,11 +206,11 @@ public class Meet3_Auto_LStrafe extends LinearOpMode {
 
                     //place cone on pole here
 
-                    claw.setPosition(0);
+                    claw.setPosition(0.89);
 
                     sleep(1500);
 
-                    claw.setPosition(1);
+//                    claw.setPosition(1);
 
                     //delift arm here
 

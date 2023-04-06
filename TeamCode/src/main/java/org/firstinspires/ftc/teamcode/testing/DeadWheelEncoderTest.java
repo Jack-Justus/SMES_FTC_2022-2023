@@ -27,15 +27,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.testing;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import static org.firstinspires.ftc.teamcode.AutoData.encoderTicksToInches;
+import static org.firstinspires.ftc.teamcode.autonomous.AutoData.encoderTicksToInches;
 
+import org.firstinspires.ftc.teamcode.autonomous.AutoData;
 import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 
 

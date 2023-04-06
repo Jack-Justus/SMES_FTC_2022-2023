@@ -27,14 +27,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.autonomous;
 
-import static org.firstinspires.ftc.teamcode.AutoData.encoderInchesToTicks;
+import static org.firstinspires.ftc.teamcode.autonomous.AutoData.encoderInchesToTicks;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -68,7 +67,7 @@ import java.util.ArrayList;
 // (line up robot touching back wall at an angle so that driving straight forward corresponds with tallest pole)
 // then, lift arm, drop off pre-load cone
 @Autonomous
-public class Meet3_Auto_NoStrafe extends LinearOpMode {
+public class Meet3_Auto_LStrafe extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -85,6 +84,7 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
     //Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
     private Servo claw = null;
+
 
     private int autoPhase = 0;
 
@@ -135,7 +135,8 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
         // First Move
         //all in inches btw
 
-        double initialForward = 6.5;
+        double initialForward = 11.2;
+        double initialStrafe = 13;
 
         Trajectory coneMovement = drive.trajectoryBuilder(new Pose2d())
                 .forward(initialForward)
@@ -146,23 +147,27 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
                 .build();
 
         Trajectory strafeToCenter = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(11.5)
+                .strafeRight(initialStrafe + .7)
                 .build();
 
-        Trajectory coneScanPos = drive.trajectoryBuilder(new Pose2d())
-                .forward(15)
+        Trajectory strafeToPole = drive.trajectoryBuilder(new Pose2d())
+                .strafeLeft(initialStrafe)
                 .build();
+
+//        Trajectory coneScanPos = drive.trajectoryBuilder(new Pose2d())
+//                .forward(0) //was 6
+//                .build();
 
         Trajectory strafeToLeft = drive.trajectoryBuilder(new Pose2d())
-                .strafeLeft(24)
+                .strafeLeft(25.5)
                 .build();
 
         Trajectory middleSquare = drive.trajectoryBuilder(new Pose2d())
-                .forward(8)
+                .forward(24.4)
                 .build();
 
         Trajectory strafeToRight = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(24)
+                .strafeRight(25)
                 .build();
 
         waitForStart();
@@ -177,39 +182,49 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
              */
 
 
-            switch (autoPhase) {
+            if (autoPhase == 0) {
+                    //strafe to pole
+                    claw.setPosition(1);
 
-                case 0: {
+                    drive.followTrajectory(strafeToPole);
                     // Starting by moving and raising the lift
-//                    if (moveLift(300)) {
+                    vertLinearSlide.setPower(.5);
+                    while (opModeIsActive() && Math.abs(vertLinearSlide.getCurrentPosition()) < (1300)) {
+                        idle();
+                    }
+                    vertLinearSlide.setPower(0);
+//                    if (moveLift(-500)) {
 //                        sleep(3000);
 //                    }
-//
-//                    sleep(5000);
-//
-//                    //we start in front of pole
-//                    //so go forward a tiny bit
-//                    drive.followTrajectory(coneMovement);
-//
-//                    //place cone on pole here
-//
-//                    claw.setPower(1);
-//
-//                    sleep(3000);
-//
-//                    claw.setPower(0);
-//
-//                    //delift arm here
-//                    if (moveLift(0)) {
-//                        sleep(1000);
+
+
+                    //we start in front of pole
+                    //so go forward a tiny bit
+                    drive.followTrajectory(coneMovement);
+
+                    //place cone on pole here
+
+                    claw.setPosition(0.89);
+
+                    sleep(1500);
+
+//                    claw.setPosition(1);
+
+                    //delift arm here
+
+//                    vertLinearSlide.setPower(-1);
+
+//                    while (opModeIsActive() && Math.abs(vertLinearSlide.getCurrentPosition()) > 100) {
+//                        idle();
 //                    }
-//
+
 //                    vertLinearSlide.setPower(0);
 
                     //goes to the parking signal
-//                    drive.followTrajectory(returnToSquare);
-//                    drive.followTrajectory(strafeToCenter);
-                    drive.followTrajectory(coneScanPos);
+                    drive.followTrajectory(returnToSquare);
+                    drive.followTrajectory(strafeToCenter);
+
+//                    drive.followTrajectory(coneScanPos);
 
                     //now detect cone and park
                     autoPhase = 1;
@@ -219,45 +234,34 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
                     telemetry.addData("finalY", poseEstimate.getY());
                     telemetry.addData("finalHeading", poseEstimate.getHeading());
                     //telemetry.addLine("encoder dist travelled: ");
-                    break;
                 }
-                case 1: {
+                else if(autoPhase == 1) {
                     // Computer vision
-                    switch (checkConeState()) {
-                        case 0:
+                     int parkSpot = checkConeState();
+                        if (parkSpot == 0) {
                             //park in leftmost square
                             telemetry.addLine("parking leftward");
                             telemetry.update();
                             drive.followTrajectory(middleSquare);
                             drive.followTrajectory(strafeToLeft);
-                            break;
-                        case 1:
+                        }
+                        if (parkSpot == 1) {
                             //park in middle square
                             telemetry.addLine("parking middle");
                             telemetry.update();
                             drive.followTrajectory(middleSquare);
-                            break;
-                        case 2:
-                            //park in rightmost square
-                            telemetry.addLine("parking right square");
-                            telemetry.update();
-                            drive.followTrajectory(middleSquare);
-                            drive.followTrajectory(strafeToRight);
-                            break;
-                        default:
-                            // TODO: Thoughts on what we should do if the camera can't see anything?
-                            // we should park somewhere that'll still get us points w/o the cv if it doesn't detect
-                            //right now it just parks in the middle square
-                            telemetry.addLine("couldn't find april tag, parking in middle");
-                            telemetry.update();
-                            drive.followTrajectory(middleSquare);
-                            break;
+                        }
+                    if (parkSpot == 2) {
+                        //park in rightmost square
+                        telemetry.addLine("parking right square");
+                        telemetry.update();
+                        drive.followTrajectory(middleSquare);
+                        drive.followTrajectory(strafeToRight);
                     }
-                    break;
                 }
-            }
         }
     }
+
 
     private int checkConeState() {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -279,33 +283,47 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
 
         telemetry.setMsTransmissionInterval(50);
         ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+//        int retryCount = 0;
+//        while ((currentDetections == null || currentDetections.size() == 0) && retryCount < 5 && opModeIsActive()) {
+//            currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+//            retryCount++;
+//            sleep(100);
+//        }
+//        if (retryCount == 5) {
+//            telemetry.addLine("couldn't detect tag");
+//            telemetry.update();
+//            return 1;
+//        }
         //if it can't detect the tag in 10 detection cycles, i define this as unable to detect the tag
         //this means itll just go to the middle square
-        while (currentDetections.size() < 10) {
-            currentDetections = aprilTagDetectionPipeline.getLatestDetections();
-            if (currentDetections.size() != 0) {
-                boolean tagFound = false;
+            while (currentDetections.size() < 5 && opModeIsActive()) {
+                currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+                if (currentDetections != null) {
+                    if (currentDetections.size() != 0) {
+                        boolean tagFound = false;
 
-                for (AprilTagDetection tag : currentDetections) {
-                    if (tag.id == PARK_LEFT) {
-                        tagOfInterest = tag;
-                        camera.closeCameraDevice();
-                        return 0;
+                        for (AprilTagDetection tag : currentDetections) {
+                            if (tag.id == PARK_LEFT) {
+                                tagOfInterest = tag;
+                                camera.closeCameraDevice();
+                                return 0;
+                            }
+                            if (tag.id == PARK_MIDDLE || tag == null) {
+                                tagOfInterest = tag;
+                                camera.closeCameraDevice();
+                                return 1;
+                            }
+                            if (tag.id == PARK_RIGHT) {
+                                tagOfInterest = tag;
+                                camera.closeCameraDevice();
+                                return 2;
+                            }
+                        }
                     }
-                    if (tag.id == PARK_MIDDLE) {
-                        tagOfInterest = tag;
-                        camera.closeCameraDevice();
-                        return 1;
-                    }
-                    if (tag.id == PARK_RIGHT) {
-                        tagOfInterest = tag;
-                        camera.closeCameraDevice();
-                        return 2;
-                    }
+                    sleep(100);
                 }
             }
-            sleep(100);
-        }
+        camera.closeCameraDevice();
         return 1;
     }
 
@@ -316,7 +334,7 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
         // Constants
         double liftTicks = vertLinearSlide.getCurrentPosition();
         final double LIFT_IDLE_POWER = 0.3;
-        final double LIFT_MID_POWER = -0.3;
+        final double LIFT_MIN_POWER = -0.3;
         final double LIFT_MAX_POWER = 1.0;
 
 
@@ -329,7 +347,7 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
 
         double distToTarget = -(liftTicks - targetTicks);
 
-        double calcPower = Range.clip(distToTarget / 1000, LIFT_MID_POWER, LIFT_MAX_POWER);
+        double calcPower = Range.clip(distToTarget / 1000, LIFT_MIN_POWER, LIFT_MAX_POWER);
 
         vertLinearSlide.setPower(calcPower);
 
@@ -406,13 +424,6 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
         }
     }
 
-//    private void closeClaw() {
-//        claw.setPower(1);
-//    }
-//
-//    private void openClaw() {
-//        claw.setPower(-1);
-//    }
 
     private void initializeHardware() {
 
@@ -427,6 +438,8 @@ public class Meet3_Auto_NoStrafe extends LinearOpMode {
         vertLinearSlide = hardwareMap.get(DcMotor.class, "vertSlide");
 //        horLinearSlide = hardwareMap.get(DcMotor.class, "horSlide");
         claw = hardwareMap.get(Servo.class, "claw");
+
+        vertLinearSlide.setDirection(DcMotor.Direction.REVERSE);
 
         // init slides
         vertLinearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

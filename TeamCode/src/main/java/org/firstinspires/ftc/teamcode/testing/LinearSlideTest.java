@@ -27,28 +27,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.testing;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 @Disabled
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Encoder Linear Slide Test", group = "Linear Opmode")
-public class EncLinearSlideTest extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Linear Slide Test", group = "Linear Opmode")
+public class LinearSlideTest extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    // MAX_TICKS is the value at the top (don't raise up more than this)
-    // MIN_TICKS is the value at the bottom (don't wind up more than this)
-    final int MAX_TICKS = 1500;
-    final int MIN_TICKS = 0;
 
-    private DcMotorEx linearSlide;
-
-    boolean upperBoundHit = false;
+    private CRServo LinearSlide;
+    private Servo claw = null;
 
     @Override
     public void runOpMode() {
@@ -66,8 +63,7 @@ public class EncLinearSlideTest extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             controlLinearSlide();
-            telemetry.addData("Slide encoder value: ", linearSlide.getCurrentPosition());
-            telemetry.update();
+            controlClaw();
         }
     }
 
@@ -76,62 +72,31 @@ public class EncLinearSlideTest extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        linearSlide = hardwareMap.get(DcMotorEx.class, "slide");
+        LinearSlide = hardwareMap.get(CRServo.class, "slide");
+        claw = hardwareMap.get(Servo.class, "claw");
+
 
         // Ensuring the motors get the instructions
         sleep(100);
-
-        linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     private void controlLinearSlide() {
-
-        if (gamepad2.b) {
-            // Going up
-
-            // If the linear slide has hit the top then the upperBoundHit becomes true
-            // We can only move the linear slide up if upperBoundHit is false
-            // upperBoundHit becomes false again when we have left the buffer threshold (100 ticks) below the top
-            if (linearSlide.getCurrentPosition() >= MAX_TICKS)
-                upperBoundHit = true;
-            else if (linearSlide.getCurrentPosition() < MAX_TICKS - 100)
-                upperBoundHit = false;
-
-            // If the current position is valid, we move the motor upwards
-            // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
-            if ((linearSlide.getCurrentPosition() < MAX_TICKS) && (!upperBoundHit))
-                linearSlide.setPower(1);
-            else
-                linearSlide.setPower(0);
-
-        } else if (gamepad2.a) {
-            // Going down
-
-            // If the current position is valid, we move the motor upwards
-            // The second conditional is to make sure the motor doesn't go clank clank at the top (basically a buffer)
-            if ((linearSlide.getCurrentPosition() > MIN_TICKS))
-                linearSlide.setPower(-.5);
-            else
-                linearSlide.setPower(0);
-        } else {
-            linearSlide.setPower(0);
-        }
-
-
-//        if (gamepad2.b)
-//            if (linearSlide.getCurrentPosition() >= MAX_TICKS) {
-//                linearSlide.setPower(0);
-//            } else {
-//                linearSlide.setPower(1);
-//            }
-//        else if (gamepad2.a)
-//            if (linearSlide.getCurrentPosition() <= MIN_TICKS) {
-//                linearSlide.setPower(0);
-//            } else {
-//                linearSlide.setPower(-.5);
-//            }
-//        else
-//            linearSlide.setPower(0);
+        if (gamepad1.b)
+            LinearSlide.setPower(1);
+        else if (gamepad1.a)
+            LinearSlide.setPower(-1);
+        else
+            LinearSlide.setPower(0);
     }
+
+    private void controlClaw() {
+        if (gamepad1.x) {
+            claw.setPosition(1);
+        }
+        //set servo to 0
+        if (gamepad1.y) {
+            claw.setPosition(.7);
+        }
+    }
+
 }

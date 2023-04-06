@@ -27,34 +27,51 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.testing;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+
+/**
+ * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
+ * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
+ * of the FTC Driver Station. When a selection is made from the menu, the corresponding OpMode
+ * class is instantiated on the Robot Controller and executed.
+ * <p>
+ * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
+ * It includes all the skeletal structure that all linear OpModes contain.
+ * <p>
+ * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
+ */
+
 @Disabled
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Linear Slide Test", group = "Linear Opmode")
-public class LinearSlideTest extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Simple Drive Mode", group = "Linear Opmode")
+public class SimpleDriveMode extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
-    private CRServo LinearSlide;
-    private Servo claw = null;
+    // Left and Right Drive Motor Objects
+    private DcMotor rightFrontDrive = null;
+    private DcMotor rightBackDrive = null;
+    private DcMotor leftFrontDrive = null;
+    private DcMotor leftBackDrive = null;
+    private double power = 0;
 
     @Override
     public void runOpMode() {
 
-        // Method to assign and initialize the hardware
-        initializeHardware();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+
+        // Method to assign and initialize the hardware
+        initializeHardware();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -62,8 +79,30 @@ public class LinearSlideTest extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            controlLinearSlide();
-            controlClaw();
+
+            // The left trigger is power and the right reverses the power
+            // If the right trigger is pressed down, the power is reversed.
+            // For those who might try to fix this in future years - don't
+            //im sorry jack i cant
+//            double power = gamepad1.right_trigger >= 0.2
+//                    ? -gamepad1.left_trigger
+//                    : gamepad1.left_trigger;
+            if (gamepad1.right_trigger >= 0.2) {
+                double power = -gamepad1.left_trigger;
+            } else {
+                double power = gamepad1.left_trigger;
+            }
+
+            // Send calculated power to wheels
+            rightBackDrive.setPower(power);
+            rightFrontDrive.setPower(power);
+            leftFrontDrive.setPower(power);
+            leftBackDrive.setPower(power);
+
+            // Show the elapsed game time and wheel power.
+            telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("Motors", "left (%.2f), right (%.2f)", power, power);
+            telemetry.update();
         }
     }
 
@@ -72,31 +111,11 @@ public class LinearSlideTest extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        LinearSlide = hardwareMap.get(CRServo.class, "slide");
-        claw = hardwareMap.get(Servo.class, "claw");
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "lf");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "lb");
+        rightBackDrive = hardwareMap.get(DcMotor.class, "rb");
+        rightFrontDrive = hardwareMap.get(DcMotor.class, "rf");
 
 
-        // Ensuring the motors get the instructions
-        sleep(100);
     }
-
-    private void controlLinearSlide() {
-        if (gamepad1.b)
-            LinearSlide.setPower(1);
-        else if (gamepad1.a)
-            LinearSlide.setPower(-1);
-        else
-            LinearSlide.setPower(0);
-    }
-
-    private void controlClaw() {
-        if (gamepad1.x) {
-            claw.setPosition(1);
-        }
-        //set servo to 0
-        if (gamepad1.y) {
-            claw.setPosition(.7);
-        }
-    }
-
 }

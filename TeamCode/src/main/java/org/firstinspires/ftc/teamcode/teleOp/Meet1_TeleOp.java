@@ -30,16 +30,14 @@
 package org.firstinspires.ftc.teamcode.teleOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
-import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
+import org.firstinspires.ftc.teamcode.driveTools.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.driveTools.StandardTrackingWheelLocalizer;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -62,25 +60,14 @@ import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Normal Drive Mode", group = "Linear Opmode")
 public class Meet1_TeleOp extends LinearOpMode {
 
-    // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
-    // Left and Right Drive Motor Objects
+    // Drive Motors + Encoders
     SampleMecanumDrive drive = null;
+    StandardTrackingWheelLocalizer encoders = null;
 
-
-    // vert Slide and Claw Objects
     private DcMotor vertLinearSlide = null;
     private Servo claw = null;
-//    private Servo joe = null;
-//    private Servo joe = null;
-
-    // hor slide (no claw)
-//    private DcMotor horLinearSlide = null;
-
-    // Encoders
-    StandardTrackingWheelLocalizer encoders;
-
 
     // Used for vert linear slide
     private boolean upperBoundHit = false;
@@ -107,104 +94,42 @@ public class Meet1_TeleOp extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            // Driving robot is handled on gamepad1
-            driveCode();
+            driveCode(gamepad1);
+            controlClaw(gamepad2);
+            controlVertSlide(gamepad2);
 
-            // Claw is controlled by gamepad2
-            controlClaw();
-
-            // The vertical slide is controlled by gamepad2
-            controlVertSlide();
-
-            // The Horizontal slide is controlled by gamepad1
-            //controlHorizontalSlide();
-
-            // No driver controls this
-            //odometry();
-
-
-//            telemetry.addData("Slide Encoder", "Value (%.2f)", linearSlide.getCurrentPosition());
         }
     }
 
-    private void controlHorizontalSlide() {
 
-        /***********************
-         * HORIZONTAL SLIDE HARDWARE MAP
-         *
-         * DEPRACATED
-         *
-         *      BUTTON A:
-         * SLIDE IN
-         *
-         *      BUTTON B:
-         * SLIDE OUT
-         *
-         * WE GOING YOLO NO ENCODER LIMITS JUST DON'T BREAK THE ROBOT
-         *
-         *********************/
+    private void driveCode(Gamepad gp) {
 
-//        Gamepad gp = gamepad1;
-
-//        if (gp.a)
-//            horLinearSlide.setPower(1);
-//        else if (gp.b)
-//            horLinearSlide.setPower(-1);
-//        else
-//            horLinearSlide.setPower(0);
-    }
-
-    private void driveCode() {
-
-        /**********************
-         * DRIVE MAP
-         *
-         *      LEFT STICK:
-         * FWD, BWD, L, AND R
-         *
-         *      RIGHT STICK:
-         * ROTATE L AND R
-         *
-         *      RIGHT STICK (PRESS):
-         * ROTATE FAST (HOLD)
-         *
-         *      RIGHT BUMPER:
-         * SLOWMODE
-         *
-         *********************/
-
-        // Drive vars
-        double lfp, lbp, rfp, rbp;
-        float x, y, rot, rotSpeed;
-        boolean slowModeActive;
-        double speedModifier;
-
-        // Driving is handled on gamepad1
-        Gamepad gp = gamepad1;
-
-        x = gp.left_stick_x;
-        y = -gp.left_stick_y;
-
-        rot = -gp.right_stick_x;
-
+        // Drive Constants
         double maxSpeed = 0.7;
 
-        // Drive Code
-        lfp = Range.clip(x + y, -maxSpeed, maxSpeed);
-        lbp = Range.clip(y - x, -maxSpeed, maxSpeed);
 
-        rfp = Range.clip(y - x, -maxSpeed, maxSpeed);
-        rbp = Range.clip(x + y, -maxSpeed, maxSpeed);
+        // Input Calculations
+        float x = gp.left_stick_x;
+        float y = -gp.left_stick_y;
+
+        double lfp = Range.clip(x + y, -maxSpeed, maxSpeed);
+        double lbp = Range.clip(y - x, -maxSpeed, maxSpeed);
+
+        double rfp = Range.clip(y - x, -maxSpeed, maxSpeed);
+        double rbp = Range.clip(x + y, -maxSpeed, maxSpeed);
+
 
         // Fast rotation
+        float rotSpeed;
         if (gp.right_stick_button)
             rotSpeed = 1;
         else
             rotSpeed = 2;
 
-        // Slow mode
-        slowModeActive = gp.right_bumper;
 
+        // Slow mode
+        boolean slowModeActive = gp.right_bumper;
+        double speedModifier;
         if (slowModeActive) {
             speedModifier = .4;
             setMotorsBreakMode();
@@ -213,7 +138,10 @@ public class Meet1_TeleOp extends LinearOpMode {
             setMotorsFloatMode();
         }
 
+
         // Rotational offset code factoring in precalculated drive code
+        float rot = -gp.right_stick_x;
+
         lfp = Range.clip(lfp - rot / rotSpeed, -1.0, 1.0);
         lbp = Range.clip(lbp - rot / rotSpeed, -1.0, 1.0);
 
@@ -222,13 +150,8 @@ public class Meet1_TeleOp extends LinearOpMode {
 
         // Send calculated power to wheels
         drive.setMotorPowers(lfp * speedModifier, lbp * speedModifier, rbp * speedModifier, rfp * speedModifier);
-//        leftFrontDrive.setPower((lfp) * speedModifier);
-//        leftBackDrive.setPower((lbp) * speedModifier);
-//        rightBackDrive.setPower((rbp) * speedModifier);
-//        rightFrontDrive.setPower((rfp) * speedModifier);
 
-
-        // Show the elapsed game time and wheel power.
+        // Printing to console
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Motor Power", "lf (%.2f), rb (%.2f), lb (%.2f), rf (%.2f)", lfp, rbp, lbp, rfp);
         telemetry.addData("Speed Modifier", "Master (%.2f), Rotational (%.2f)", speedModifier, rotSpeed);
@@ -238,8 +161,6 @@ public class Meet1_TeleOp extends LinearOpMode {
         telemetry.addData("Right Encoder", encoders.getWheelPositions().get(1));
         telemetry.addData("Front Encoder", encoders.getWheelPositions().get(2));
         telemetry.update();
-
-
     }
 
     public void initializeHardware() {
@@ -295,7 +216,7 @@ public class Meet1_TeleOp extends LinearOpMode {
         setMotorsBreakMode();
     }
 
-    private void controlVertSlide() {
+    private void controlVertSlide(Gamepad gp) {
 
         /**********************
          *  VERT SLIDE HARDWARE MAP
@@ -316,8 +237,6 @@ public class Meet1_TeleOp extends LinearOpMode {
          *  SET ENCODER TO 0
          *
          *********************/
-
-        Gamepad gp = gamepad2;
 
         final int PILOT_MODE = 2;
         // 1 Uses buttons
@@ -424,9 +343,7 @@ public class Meet1_TeleOp extends LinearOpMode {
 
     }
 
-    public void controlClaw() {
-
-        Gamepad gp = gamepad2;
+    public void controlClaw(Gamepad gp) {
 
         /**********************
          * CLAW MAP
@@ -437,9 +354,6 @@ public class Meet1_TeleOp extends LinearOpMode {
          *      R Trigger:
          * OPEN CLAW
          *
-         *      MARY (currently not enabled):
-         *      ????
-         *
          *********************/
 
 
@@ -447,17 +361,6 @@ public class Meet1_TeleOp extends LinearOpMode {
             claw.setPosition(1);
         else if (gp.x)
             claw.setPosition(0.7);
-//        else
-//            claw.setPosition(0);
-
-        // Joe code
-//        double CLAW_CLOSED = 1;
-//        double CLAW_OPEN = 0;
-//        if (gp.x) {
-//            joe.setPosition(CLAW_CLOSED);
-//        } else if (gp.y) {
-//            joe.setPosition(CLAW_OPEN);
-//        }
     }
 
     public void setMotorsBreakMode() {

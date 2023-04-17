@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive;
+package org.firstinspires.ftc.teamcode.driveTools;
 
 import androidx.annotation.NonNull;
 
@@ -36,21 +36,31 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.MAX_ACCEL;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.MAX_ANG_ACCEL;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.MAX_ANG_VEL;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.MAX_VEL;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.MOTOR_VELO_PID;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.RUN_USING_ENCODER;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.TRACK_WIDTH;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.encoderTicksToInches;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.kA;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.kStatic;
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.kV;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.MAX_ACCEL;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.MAX_ANG_ACCEL;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.MAX_ANG_VEL;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.MAX_VEL;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.MOTOR_VELO_PID;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.RUN_USING_ENCODER;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.TRACK_WIDTH;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.encoderTicksToInches;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.kA;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.kStatic;
+import static org.firstinspires.ftc.teamcode.driveTools.DriveConstants.kV;
 
 /*
  * Simple mecanum drive hardware implementation for REV hardware.
  */
+
+/*
+//      READ IF THIS IS YOUR FIRST TIME OPENING THIS FILE
+//
+//      THIS IS A CLASS FOR OUR DRIVE CODE
+//      IT ALLOWS US TO CONTROL THE MOTORS BETTER, GET ENCODER DATA, AND GIVE ROADRUNNER ACCESS TO OUR DRIVE MOTORS
+//      WE SHOULDN'T HAVE TO MAKE ANY CHANGES TO THIS CLASS
+// */
+
+
 @Config
 public class SampleMecanumDrive extends MecanumDrive {
     public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(0, 0, 0);
